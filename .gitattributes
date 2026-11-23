@@ -1,0 +1,3 @@
+* text=auto
+# Keep the frozen canonical SQL byte-for-byte, including its source line endings.
+Vairas.SchoolManagement.Persistance/Migrations/Sql/Initial.sql -text

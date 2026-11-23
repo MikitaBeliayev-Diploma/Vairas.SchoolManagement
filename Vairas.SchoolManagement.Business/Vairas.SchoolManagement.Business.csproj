@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../Vairas.SchoolManagement.Domain/Vairas.SchoolManagement.Domain.csproj" />
+  </ItemGroup>
+</Project>

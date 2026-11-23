@@ -1,0 +1,17 @@
+**/bin/
+**/obj/
+**/TestResults/
+.cache/
+*.user
+.env
+.env.*
+!.env.example
+**/.vs/
+**/secrets.json
+**/appsettings.Local.json
+*.pfx
+*.pem
+*.key
+*.p12
+*.p8
+*.snk

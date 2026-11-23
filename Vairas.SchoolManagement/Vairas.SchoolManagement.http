@@ -1,0 +1,295 @@
+# Replace synthetic IDs with authorized resources. Tokens come only from your process environment.
+# Every write has a distinct stable example key; retry the identical request/key. Use a new key for new intent.
+@baseUrl = https://localhost:7200
+@userToken = {{$processEnv VAIRAS_USER_TOKEN}}
+@workloadToken = {{$processEnv VAIRAS_WORKLOAD_TOKEN}}
+@schoolId = 10000000-0000-4000-8000-000000000001
+@branchId = 10000000-0000-4000-8000-000000000002
+@groupId = 10000000-0000-4000-8000-000000000003
+@enrollmentId = 10000000-0000-4000-8000-000000000004
+@invitationId = 10000000-0000-4000-8000-000000000005
+@membershipId = 10000000-0000-4000-8000-000000000006
+@studentId = 10000000-0000-4000-8000-000000000007
+@teacherId = 10000000-0000-4000-8000-000000000008
+@programVersionId = 10000000-0000-4000-8000-000000000009
+@targetUserId = 10000000-0000-4000-8000-000000000010
+
+### validateProfileProvisioning
+POST {{baseUrl}}/internal/v1/profile-provisioning/validate
+Authorization: Bearer {{workloadToken}}
+X-Correlation-ID: school-example-1
+Idempotency-Key: 20000000-0000-4000-8000-000000000001
+Content-Type: application/json
+
+{
+  "actorUserId": "{{targetUserId}}",
+  "targetUserId": "{{targetUserId}}",
+  "schoolId": "{{schoolId}}",
+  "invitationId": "{{invitationId}}",
+  "role": "Teacher",
+  "bootstrap": false
+}
+
+### checkEnrollmentEligibility
+GET {{baseUrl}}/internal/v1/enrollments/{{enrollmentId}}/eligibility?schoolId={{schoolId}}&actingUserId={{targetUserId}}&teacherId={{teacherId}}
+Authorization: Bearer {{workloadToken}}
+X-Correlation-ID: school-example-2
+
+### getGroupParticipants
+GET {{baseUrl}}/internal/v1/groups/{{groupId}}/participants?schoolId={{schoolId}}&membershipRevision=1&from=2026-12-01T10%3A00%3A00Z&to=2026-12-01T11%3A00%3A00Z
+Authorization: Bearer {{workloadToken}}
+X-Correlation-ID: school-example-3
+
+### issueInvitation
+POST {{baseUrl}}/api/v1/schools/{{schoolId}}/invitations
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-4
+Idempotency-Key: 20000000-0000-4000-8000-000000000004
+Content-Type: application/json
+
+{
+  "targetUserId": "{{targetUserId}}",
+  "role": "Teacher"
+}
+
+### getInvitation
+GET {{baseUrl}}/api/v1/schools/{{schoolId}}/invitations/{{invitationId}}
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-5
+
+### acceptInvitation
+POST {{baseUrl}}/api/v1/schools/{{schoolId}}/invitations/{{invitationId}}/accept
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-6
+Idempotency-Key: 20000000-0000-4000-8000-000000000006
+Content-Type: application/json
+
+{
+  "expectedRevision": 1
+}
+
+### revokeInvitation
+POST {{baseUrl}}/api/v1/schools/{{schoolId}}/invitations/{{invitationId}}/revoke
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-7
+Idempotency-Key: 20000000-0000-4000-8000-000000000007
+Content-Type: application/json
+
+{
+  "expectedRevision": 1,
+  "reason": "Invitation withdrawn"
+}
+
+### getMyInvitations
+GET {{baseUrl}}/api/v1/users/me/invitations?limit=20
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-8
+
+### getMyEnrollments
+GET {{baseUrl}}/api/v1/users/me/enrollments
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-9
+
+### getSchool
+GET {{baseUrl}}/api/v1/schools/{{schoolId}}
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-10
+
+### renameSchool
+PATCH {{baseUrl}}/api/v1/schools/{{schoolId}}/name
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-11
+Idempotency-Key: 20000000-0000-4000-8000-000000000011
+Content-Type: application/json
+
+{
+  "expectedRevision": 1,
+  "name": "School display name"
+}
+
+### listBranches
+GET {{baseUrl}}/api/v1/schools/{{schoolId}}/branches
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-12
+
+### createBranch
+POST {{baseUrl}}/api/v1/schools/{{schoolId}}/branches
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-13
+Idempotency-Key: 20000000-0000-4000-8000-000000000013
+Content-Type: application/json
+
+{
+  "name": "Main branch",
+  "addressLine": "Synthetic address",
+  "city": "Vilnius",
+  "postalCode": null,
+  "countryCode": "LT"
+}
+
+### getBranch
+GET {{baseUrl}}/api/v1/schools/{{schoolId}}/branches/{{branchId}}
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-14
+
+### updateBranch
+PUT {{baseUrl}}/api/v1/schools/{{schoolId}}/branches/{{branchId}}
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-15
+Idempotency-Key: 20000000-0000-4000-8000-000000000015
+Content-Type: application/json
+
+{
+  "expectedRevision": 1,
+  "name": "Updated branch",
+  "addressLine": null,
+  "city": "Vilnius",
+  "postalCode": null,
+  "countryCode": "LT"
+}
+
+### listGroups
+GET {{baseUrl}}/api/v1/schools/{{schoolId}}/groups
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-16
+
+### createGroup
+POST {{baseUrl}}/api/v1/schools/{{schoolId}}/groups
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-17
+Idempotency-Key: 20000000-0000-4000-8000-000000000017
+Content-Type: application/json
+
+{
+  "name": "Theory group",
+  "branchId": null,
+  "categoryCode": null
+}
+
+### getGroup
+GET {{baseUrl}}/api/v1/schools/{{schoolId}}/groups/{{groupId}}
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-18
+
+### renameGroup
+PATCH {{baseUrl}}/api/v1/schools/{{schoolId}}/groups/{{groupId}}/name
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-19
+Idempotency-Key: 20000000-0000-4000-8000-000000000019
+Content-Type: application/json
+
+{
+  "expectedRevision": 1,
+  "name": "Renamed group"
+}
+
+### getMemberships
+GET {{baseUrl}}/api/v1/schools/{{schoolId}}/memberships
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-20
+
+### getEnrollment
+GET {{baseUrl}}/api/v1/schools/{{schoolId}}/enrollments/{{enrollmentId}}
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-21
+
+### getPlanningInputs
+GET {{baseUrl}}/api/v1/schools/{{schoolId}}/planning-inputs
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-22
+
+### createEnrollment
+POST {{baseUrl}}/api/v1/schools/{{schoolId}}/enrollments
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-23
+Idempotency-Key: 20000000-0000-4000-8000-000000000023
+Content-Type: application/json
+
+{
+  "studentId": "{{studentId}}",
+  "licenseCategory": "B"
+}
+
+### assignEnrollmentGroup
+PUT {{baseUrl}}/api/v1/schools/{{schoolId}}/enrollments/{{enrollmentId}}/group-assignment
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-24
+Idempotency-Key: 20000000-0000-4000-8000-000000000024
+Content-Type: application/json
+
+{
+  "groupId": "{{groupId}}",
+  "programVersionId": "{{programVersionId}}",
+  "expectedRevision": 1
+}
+
+### endEnrollment
+POST {{baseUrl}}/api/v1/schools/{{schoolId}}/enrollments/{{enrollmentId}}/termination
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-25
+Idempotency-Key: 20000000-0000-4000-8000-000000000025
+Content-Type: application/json
+
+{
+  "expectedRevision": 1,
+  "status": "Withdrawn"
+}
+
+### endMembership
+POST {{baseUrl}}/api/v1/schools/{{schoolId}}/memberships/{{membershipId}}/termination
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-26
+Idempotency-Key: 20000000-0000-4000-8000-000000000026
+Content-Type: application/json
+
+{
+  "expectedRevision": 1
+}
+
+### assignTeacher
+POST {{baseUrl}}/api/v1/schools/{{schoolId}}/groups/{{groupId}}/teacher-assignments
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-27
+Idempotency-Key: 20000000-0000-4000-8000-000000000027
+Content-Type: application/json
+
+{
+  "teacherId": "{{teacherId}}",
+  "expectedRevision": 1
+}
+
+### changeSchoolStatus
+POST {{baseUrl}}/api/v1/schools/{{schoolId}}/status
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-28
+Idempotency-Key: 20000000-0000-4000-8000-000000000028
+Content-Type: application/json
+
+{
+  "expectedRevision": 1,
+  "status": "Inactive"
+}
+
+### changeBranchStatus
+POST {{baseUrl}}/api/v1/schools/{{schoolId}}/branches/{{branchId}}/status
+Authorization: Bearer {{userToken}}
+X-Correlation-ID: school-example-29
+Idempotency-Key: 20000000-0000-4000-8000-000000000029
+Content-Type: application/json
+
+{
+  "expectedRevision": 1,
+  "status": "Inactive"
+}
+
+### Expected 404: unknown branch within an authorized school
+GET {{baseUrl}}/api/v1/schools/{{schoolId}}/branches/ffffffff-ffff-4fff-8fff-ffffffffffff
+Authorization: Bearer {{userToken}}
+
+### Expected 400: missing required role
+POST {{baseUrl}}/api/v1/schools/{{schoolId}}/invitations
+Authorization: Bearer {{userToken}}
+Idempotency-Key: 30000000-0000-4000-8000-000000000001
+Content-Type: application/json
+
+{"targetUserId":"{{targetUserId}}"}
