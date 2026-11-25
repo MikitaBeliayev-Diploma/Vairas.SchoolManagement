@@ -154,7 +154,8 @@ public sealed class SchoolBusinessTests : BusinessFixture
         TrainingGroup();
         p = await Service.PlanningAsync(School, Admin, default);
         Assert.That(p.MissingItems, Does.Not.Contain("ActiveEnrollments"));
-        Assert.That(p.MissingItems, Does.Contain("SchedulingEligibilityGate"));
+        // Owner-specific checks are evaluated for the selected draft period at submission, so the preliminary read names them as open.
+        Assert.That(p.MissingItems, Does.Contain("DraftSpecificSchedulingValidation").And.Contain("LearningRequirementValidation"));
     }
     [TestCase("School")]
     [TestCase("Branch")]
