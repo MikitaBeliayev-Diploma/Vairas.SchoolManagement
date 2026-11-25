@@ -30,13 +30,12 @@ using AuthProgram = Authentication::Program;
 using UserProgram = UserManagement::Program;
 using AuthHasher = Authentication::Vairas.Authentication.Security.PasswordHasher;
 using AuthProtector = Vairas.Authentication.Business.ISecretProtector;
-using UmDependencies = UserManagement::Vairas.UserManagement.Integrations.DependencyOptions;
-using UmJwt = UserManagement::Vairas.UserManagement.Security.JwtOptions;
-using UmOutbox = UserManagement::Vairas.UserManagement.Workers.OutboxOptions;
+using UmDependencies = UserManagement::Vairas.UserManagement.Configuration.Options.DependencyOptions;
+using UmJwt = UserManagement::Vairas.UserManagement.Configuration.Options.JwtOptions;
+using UmOutbox = UserManagement::Vairas.UserManagement.Configuration.Options.OutboxOptions;
+using Vairas.SchoolManagement.Configuration.Options;
 
 namespace Vairas.SchoolManagement.Tests;
-
-public sealed record TestUser(Guid UserId, TokenPair Tokens);
 public sealed class IntegrationEnvironment : IAsyncDisposable
 {
     private PostgreSqlContainer? container; private string admin = ""; private string owner = ""; private string runtime = ""; private readonly List<string> databases = [];
@@ -49,6 +48,11 @@ public sealed class IntegrationEnvironment : IAsyncDisposable
     private ConfiguredFactory<UserProgram> userFactory = null!;
     public ConfiguredFactory<Program> Factory { get; private set; } = null!;
     public TestUser Administrator { get; private set; } = null!; public TestUser Target { get; private set; } = null!; public TestUser Outsider { get; private set; } = null!;
+    public Action<Dictionary<string,string?>>? ConfigureAuth {get;set;}
+    public Action<Dictionary<string,string?>>? ConfigureSchool {get;set;}
+    public Action<IServiceCollection>? ConfigureUsers {get;set;}
+    public HttpClient? Scheduling {get;set;}
+    public HttpClient? Learning {get;set;}
     public bool FailAuth
     {
         get; set;
@@ -57,7 +61,14 @@ public sealed class IntegrationEnvironment : IAsyncDisposable
     {
         get; set;
     }
-    public static string Root => Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../.."));
+    public static string Root
+    {
+        get
+        {
+            var candidate=Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,"../../../.."));
+            return Directory.Exists(Path.Combine(candidate,"Vairas.SchoolManagement.Persistance"))?candidate:Path.GetFullPath(Path.Combine(candidate,"../Vairas.SchoolManagement"));
+        }
+    }
     public static string Backend => Path.GetDirectoryName(Root)!;
     public SchoolDbContext OwnerDb() => new(new DbContextOptionsBuilder<SchoolDbContext>().UseSchool(SchoolOwner).Options);
     public async Task StartAsync()
@@ -84,20 +95,23 @@ public sealed class IntegrationEnvironment : IAsyncDisposable
             await db.Database.OpenConnectionAsync();
             await ((NpgsqlConnection)db.Database.GetDbConnection()).ReloadTypesAsync();
         }
-        var grants = await File.ReadAllTextAsync(Path.Combine(Root, "database/runtime-grants.sql"));
-        await Sql(SchoolOwner, grants.Replace("v_school_management_runtime", runtime).Replace("v_school_management_migration", owner));
+        foreach (var file in new[] { "database/runtime-grants.sql", "database/review-grants.sql" })
+        {
+            var grants = await File.ReadAllTextAsync(Path.Combine(Root, file));
+            await Sql(SchoolOwner, grants.Replace("v_school_management_runtime", runtime).Replace("v_school_management_migration", owner));
+        }
         var auth = await Database();
         AuthOwner = auth.Owner;
         await using (var db = new AuthDbContext(new DbContextOptionsBuilder<AuthDbContext>().UseNpgsql(auth.Owner).Options))
             await db.Database.MigrateAsync();
-        await Grant(auth.Owner);
+        await Grant(auth.Owner, "Vairas.Authentication", "runtime-grants.sql", "v_authentication");
         var users = await Database();
         UserOwner = users.Owner;
         var userOptions = new DbContextOptionsBuilder<VairasDbContext>();
         userOptions.UseVairasPostgres(users.Owner);
         await using (var db = new VairasDbContext(userOptions.Options))
             await db.Database.MigrateAsync();
-        await Grant(users.Owner);
+        await Grant(users.Owner, "Vairas.UserManagement", "database-roles.sql", "v_user_management");
         Directory.CreateDirectory(Temp);
         var certPath = Path.Combine(Temp, "test.pfx");
         using (var rsa = RSA.Create(2048))
@@ -128,7 +142,8 @@ public sealed class IntegrationEnvironment : IAsyncDisposable
         {
             ["school-management"] = ["identity.validate", "profiles.status.read", "profiles.binding.read"],
             ["user-management"] = ["identity.validate", "school.profile-provisioning", "confirmations.validate"],
-            ["scheduling"] = ["school.eligibility.read", "school.participants.read"]
+            ["scheduling"] = ["school.eligibility.read", "school.participants.read"],
+            ["vehicle-management"] = ["school.vehicle-authority.read"]
         };
         foreach (var (client, scopes) in clients)
         {
@@ -138,6 +153,7 @@ public sealed class IntegrationEnvironment : IAsyncDisposable
         }
         authConfig["Authentication:ScopeAudiences:school.eligibility.read:0"] = "vairas-school-management-internal";
         authConfig["Authentication:ScopeAudiences:school.participants.read:0"] = "vairas-school-management-internal";
+        ConfigureAuth?.Invoke(authConfig);
         AuthFactory = new(Path.Combine(Backend, "Vairas.Authentication/Vairas.Authentication"), authConfig);
         Auth = AuthFactory.CreateClient(new()
         {
@@ -153,6 +169,7 @@ public sealed class IntegrationEnvironment : IAsyncDisposable
             services.Configure<UmJwt>(o => o.WorkloadClients["school-management"] = ["profiles.status.read", "profiles.binding.read"]);
             services.AddHttpClient("dependencies").ConfigurePrimaryHttpMessageHandler(() => new Bridge(this));
             ConfigureJwt(services);
+            ConfigureUsers?.Invoke(services);
         });
         Users = userFactory.CreateClient(new()
         {
@@ -168,8 +185,10 @@ public sealed class IntegrationEnvironment : IAsyncDisposable
             ["Access:PlatformOperatorUserIds:0"] = Administrator.UserId.ToString("D"),
             ["Authentication:WorkloadClients:user-management:0"] = "school.profile-provisioning",
             ["Authentication:WorkloadClients:scheduling:0"] = "school.eligibility.read",
-            ["Authentication:WorkloadClients:scheduling:1"] = "school.participants.read"
+            ["Authentication:WorkloadClients:scheduling:1"] = "school.participants.read",
+            ["Authentication:WorkloadClients:vehicle-management:0"] = "school.vehicle-authority.read"
         };
+        ConfigureSchool?.Invoke(schoolConfig);
         Factory = new(Path.Combine(Root, "Vairas.SchoolManagement"), schoolConfig, services =>
         {
             services.AddHttpClient("dependencies").ConfigurePrimaryHttpMessageHandler(() => new Bridge(this));
@@ -263,7 +282,11 @@ public sealed class IntegrationEnvironment : IAsyncDisposable
             $"ALTER SCHEMA public OWNER TO {owner}");
         return (new NpgsqlConnectionStringBuilder(admin) { Database = name, Username = owner, Password = Secret }.ConnectionString, new NpgsqlConnectionStringBuilder(admin) { Database = name, Username = runtime, Password = Secret }.ConnectionString);
     }
-    private Task Grant(string connection) => Sql(connection, $"GRANT USAGE ON SCHEMA public TO {runtime}; GRANT SELECT,INSERT,UPDATE ON ALL TABLES IN SCHEMA public TO {runtime}; GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO {runtime}");
+    private async Task Grant(string connection, string service, string script, string rolePrefix)
+    {
+        var grants = await File.ReadAllTextAsync(Path.Combine(Backend, service, "database", script));
+        await Sql(connection, grants.Replace(rolePrefix + "_runtime", runtime).Replace(rolePrefix + "_migration", owner));
+    }
     public static async Task Sql(string connection, string sql)
     {
         await using var db = new NpgsqlConnection(connection);
@@ -311,6 +334,8 @@ public sealed class IntegrationEnvironment : IAsyncDisposable
                 7100 => env.Auth,
                 7001 => env.Users,
                 7200 => env.Client,
+                7300 => env.Scheduling ?? throw new HttpRequestException("Scheduling test pipeline is not attached."),
+                7500 => env.Learning ?? throw new HttpRequestException("Learning test pipeline is not attached."),
                 _ => throw new HttpRequestException("Unexpected integration port.")
             };
             using var forward = new HttpRequestMessage(request.Method, request.RequestUri);
@@ -324,17 +349,5 @@ public sealed class IntegrationEnvironment : IAsyncDisposable
             }
             return await client.SendAsync(forward, ct);
         }
-    }
-}
-public sealed class ConfiguredFactory<T>(string contentRoot, Dictionary<string, string?> config, Action<IServiceCollection>? services = null) : WebApplicationFactory<T> where T : class
-{
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-        builder.UseEnvironment("Testing");
-        builder.UseContentRoot(contentRoot);
-        builder.ConfigureAppConfiguration((_, c) => c.AddInMemoryCollection(config));
-        builder.ConfigureLogging(l => l.ClearProviders());
-        if (services is not null)
-            builder.ConfigureTestServices(services);
     }
 }

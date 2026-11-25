@@ -2,7 +2,7 @@
   "openapi": "3.1.1",
   "info": {
     "title": "Vairas School Management API",
-    "description": "School-local organization, target-bound invitations and retained roster evidence. New eligibility activation is unavailable until verified Scheduling coordination exists. No learning hours or credentials are owned here.",
+    "description": "School-local organization, target-bound invitations and retained roster evidence. Eligibility activation uses optional durable Scheduling coordination; disabled or missing providers fail closed. No learning hours or credentials are owned here.",
     "version": "1.0.0"
   },
   "servers": [
@@ -11,6 +11,477 @@
     }
   ],
   "paths": {
+    "/internal/v1/assistant/access": {
+      "post": {
+        "tags": [
+          "AssistantAccess"
+        ],
+        "summary": "Read the current membership epoch without chat contents or membership listings.",
+        "description": " Required scope: school.assistant.read. Both signed scope and local workload-client allowlist are mandatory.",
+        "operationId": "getAssistantAccess",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantAccessRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantAccessRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantAccessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantAccessResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantAccessResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantAccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "workloadBearer": [ ]
+          }
+        ]
+      }
+    },
+    "/internal/v1/documents/authority": {
+      "post": {
+        "tags": [
+          "DocumentIntegration"
+        ],
+        "summary": "Read exact current school/enrollment authority and minimal rendering metadata.",
+        "description": " Required scope: school.participants.read. Both signed scope and local workload-client allowlist are mandatory.",
+        "operationId": "getDocumentAuthority",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentAuthorityRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentAuthorityRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentAuthorityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentAuthorityResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentAuthorityResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentAuthorityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "workloadBearer": [ ]
+          }
+        ]
+      }
+    },
+    "/internal/v1/vehicle-authority/validate": {
+      "post": {
+        "tags": [
+          "InternalSchool"
+        ],
+        "summary": "Validate exact current school/branch/administrator/teacher authority for Vehicle Management.",
+        "description": " Required scope: school.vehicle-authority.read. Both signed scope and local workload-client allowlist are mandatory.",
+        "operationId": "validateVehicleAuthority",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleAuthorityRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleAuthorityRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/VehicleAuthorityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleAuthorityResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleAuthorityResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleAuthorityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "workloadBearer": [ ]
+          }
+        ]
+      }
+    },
     "/internal/v1/profile-provisioning/validate": {
       "post": {
         "tags": [
@@ -525,6 +996,170 @@
       }
     },
     "/api/v1/schools/{schoolId}/invitations": {
+      "get": {
+        "tags": [
+          "Invitations"
+        ],
+        "summary": "List invitation metadata for the current school administrator; secrets are never returned.",
+        "operationId": "listSchoolInvitations",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationListResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationListResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [ ]
+          }
+        ]
+      },
       "post": {
         "tags": [
           "Invitations"
@@ -1257,6 +1892,804 @@
         ]
       }
     },
+    "/internal/v1/learning/authority": {
+      "post": {
+        "tags": [
+          "LearningIntegration"
+        ],
+        "summary": "Current scoped Learning authority or read-only integration metadata; no membership is created.",
+        "description": " Required scope: school.participants.read. Both signed scope and local workload-client allowlist are mandatory.",
+        "operationId": "getLearningAuthority",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LearningAuthorityRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LearningAuthorityRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LearningAuthorityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearningAuthorityResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearningAuthorityResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearningAuthorityResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "workloadBearer": [ ]
+          }
+        ]
+      }
+    },
+    "/internal/v1/learning/planning-resources": {
+      "post": {
+        "tags": [
+          "LearningIntegration"
+        ],
+        "summary": "Finite School-owned resources for Learning curriculum demand construction.",
+        "description": " Required scope: school.participants.read. Both signed scope and local workload-client allowlist are mandatory.",
+        "operationId": "getLearningPlanningResources",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LearningPlanningResourcesRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LearningPlanningResourcesRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/LearningPlanningResourcesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearningPlanningResourcesResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearningPlanningResourcesResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LearningPlanningResourcesResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "workloadBearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/schools/{schoolId}/membership-reviews": {
+      "get": {
+        "tags": [
+          "MembershipReviews"
+        ],
+        "summary": "List memberships and enrollments an administrator must review because the user's account was deactivated.",
+        "operationId": "listMembershipReviews",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "includeResolved",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MembershipReviewResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MembershipReviewResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MembershipReviewResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/schools/{schoolId}/membership-reviews/{reviewId}/resolution": {
+      "post": {
+        "tags": [
+          "MembershipReviews"
+        ],
+        "summary": "Record the administrator's decision once; end the membership or enrollment through its own coordinated command first.",
+        "operationId": "resolveMembershipReview",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "reviewId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveMembershipReviewRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveMembershipReviewRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResolveMembershipReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipReviewResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipReviewResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MembershipReviewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/users/me/schools": {
+      "get": {
+        "tags": [
+          "MySchool"
+        ],
+        "summary": "Discover active schools and current local roles of this user.",
+        "operationId": "getMySchools",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkspaceResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkspaceResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/WorkspaceResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [ ]
+          }
+        ]
+      }
+    },
     "/api/v1/users/me/invitations": {
       "get": {
         "tags": [
@@ -1550,6 +2983,2146 @@
             }
           },
           "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [ ]
+          }
+        ]
+      }
+    },
+    "/internal/v1/notifications/recipients": {
+      "post": {
+        "tags": [
+          "NotificationRecipients"
+        ],
+        "summary": "Resolve current permitted recipients for a trusted lesson or assessment source.",
+        "description": " Required scope: school.participants.read. Both signed scope and local workload-client allowlist are mandatory.",
+        "operationId": "resolveNotificationRecipients",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationRecipientsRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationRecipientsRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationRecipientsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationRecipientsResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationRecipientsResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationRecipientsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "workloadBearer": [ ]
+          }
+        ]
+      }
+    },
+    "/internal/v1/scheduling/snapshots": {
+      "post": {
+        "tags": [
+          "SchedulingIntegration"
+        ],
+        "summary": "Current School authorization, exact interval and roster for Scheduling.",
+        "description": " Required scope: school.scheduling.read. Both signed scope and local workload-client allowlist are mandatory.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchedulingSnapshotRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchedulingSnapshotRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SchedulingSnapshotRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchedulingSnapshot"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchedulingSnapshot"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchedulingSnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "workloadBearer": [ ]
+          }
+        ]
+      }
+    },
+    "/internal/v1/scheduling/access": {
+      "get": {
+        "tags": [
+          "SchedulingIntegration"
+        ],
+        "summary": "Current school membership and explicit special permission evidence.",
+        "description": " Required scope: school.scheduling.read. Both signed scope and local workload-client allowlist are mandatory.",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "actorUserId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchedulingSnapshot"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchedulingSnapshot"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchedulingSnapshot"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "workloadBearer": [ ]
+          }
+        ]
+      }
+    },
+    "/internal/v1/scheduling/rule-scope": {
+      "post": {
+        "tags": [
+          "SchedulingIntegration"
+        ],
+        "summary": "Authorize the exact School rule resource scope.",
+        "description": " Required scope: school.scheduling.read. Both signed scope and local workload-client allowlist are mandatory.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuleScopeRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuleScopeRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RuleScopeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleScopeResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleScopeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RuleScopeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "workloadBearer": [ ]
+          }
+        ]
+      }
+    },
+    "/internal/v1/scheduling/coordination/{operationId}": {
+      "get": {
+        "tags": [
+          "SchedulingIntegration"
+        ],
+        "summary": "Return the durable local decision for Scheduling finalize/abort reconciliation.",
+        "description": " Required scope: school.coordination.read. Both signed scope and local workload-client allowlist are mandatory.",
+        "parameters": [
+          {
+            "name": "operationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "schoolId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchedulingDecision"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchedulingDecision"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchedulingDecision"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "workloadBearer": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/schools/{schoolId}/memberships/{membershipId}/permissions": {
+      "post": {
+        "tags": [
+          "SchoolPermissions"
+        ],
+        "summary": "Platform operator grants SchoolRuleOwner to an Administrator or Assessor to a Teacher.",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "membershipId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Nonempty UUID. School-scoped immutable actor/command/payload binding; changed intent conflicts.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantPermissionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantPermissionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantPermissionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolChangeResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolChangeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolChangeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/schools/{schoolId}/permission-grants/{grantId}/revocation": {
+      "post": {
+        "tags": [
+          "SchoolPermissions"
+        ],
+        "summary": "Revoke an exact permission grant with an accountable reason.",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "grantId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Nonempty UUID. School-scoped immutable actor/command/payload binding; changed intent conflicts.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokePermissionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokePermissionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokePermissionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolChangeResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolChangeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolChangeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/schools/{schoolId}/activation-operations/{operationId}": {
+      "get": {
+        "tags": [
+          "SchoolPermissions"
+        ],
+        "summary": "Read only the caller's coordination outcome or a configured operator's scope.",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "operationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolChangeResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolChangeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolChangeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/schools/{schoolId}/activation-operations/{operationId}/abort": {
+      "post": {
+        "tags": [
+          "SchoolPermissions"
+        ],
+        "summary": "Platform operator aborts only an intent with no local School commit; unknown Scheduling outcomes retain protection.",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "operationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokePermissionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokePermissionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevokePermissionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolChangeResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolChangeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolChangeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/schools/{schoolId}/enrollments/{enrollmentId}/group-removal": {
+      "post": {
+        "tags": [
+          "SchoolPermissions"
+        ],
+        "summary": "Remove one group association through the same durable reservation protocol.",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "enrollmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Nonempty UUID. School-scoped immutable actor/command/payload binding; changed intent conflicts.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupAssignmentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupAssignmentRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupAssignmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolChangeResponse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolChangeResponse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SchoolChangeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/schools/{schoolId}/teachers": {
+      "get": {
+        "tags": [
+          "Schools"
+        ],
+        "summary": "List current teacher role identifiers for administrator resource selection.",
+        "operationId": "listSchoolTeachers",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TeacherResourceResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TeacherResourceResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TeacherResourceResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [ ]
+          }
+        ]
+      }
+    },
+    "/api/v1/schools/{schoolId}/enrollments": {
+      "get": {
+        "tags": [
+          "Schools"
+        ],
+        "summary": "List only enrollments visible under the caller's current school relationships.",
+        "operationId": "listVisibleEnrollments",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EnrollmentResponse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EnrollmentResponse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EnrollmentResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": [ ]
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Schools"
+        ],
+        "summary": "Create enrollment. Uses durable Scheduling eligibility coordination.",
+        "operationId": "createEnrollment",
+        "parameters": [
+          {
+            "name": "schoolId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Nonempty UUID. School-scoped immutable actor/command/payload binding; changed intent conflicts.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEnrollmentRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEnrollmentRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEnrollmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "500": {
             "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
             "content": {
               "application/problem+json": {
@@ -3750,181 +7323,12 @@
         ]
       }
     },
-    "/api/v1/schools/{schoolId}/enrollments": {
-      "post": {
-        "tags": [
-          "Schools"
-        ],
-        "summary": "Create enrollment. Unavailable until verified Scheduling activation is implemented.",
-        "description": " This build fails before effects with ACTIVATION_INTEGRATION_NOT_READY; it never reports a fabricated pending operation.",
-        "operationId": "createEnrollment",
-        "parameters": [
-          {
-            "name": "schoolId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          },
-          {
-            "name": "Idempotency-Key",
-            "in": "header",
-            "description": "Nonempty UUID. School-scoped immutable actor/command/payload binding; changed intent conflicts.",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateEnrollmentRequest"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateEnrollmentRequest"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateEnrollmentRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "503": {
-            "description": "Service Unavailable",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "410": {
-            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "415": {
-            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "bearerAuth": [ ]
-          }
-        ]
-      }
-    },
     "/api/v1/schools/{schoolId}/enrollments/{enrollmentId}/group-assignment": {
       "put": {
         "tags": [
           "Schools"
         ],
-        "summary": "Assign group/programme. Fails before effects while Scheduling/Learning integration is absent.",
-        "description": " This build fails before effects with ACTIVATION_INTEGRATION_NOT_READY; it never reports a fabricated pending operation.",
+        "summary": "Assign group/programme. Requires Scheduling coordination and verified Learning programme applicability; missing integration is absent.",
         "operationId": "assignEnrollmentGroup",
         "parameters": [
           {
@@ -4101,7 +7505,6 @@
           "Schools"
         ],
         "summary": "End enrollment. No lifecycle activation without Scheduling and completion evidence where required.",
-        "description": " This build fails before effects with ACTIVATION_INTEGRATION_NOT_READY; it never reports a fabricated pending operation.",
         "operationId": "endEnrollment",
         "parameters": [
           {
@@ -4277,8 +7680,7 @@
         "tags": [
           "Schools"
         ],
-        "summary": "End membership. Requires coordinated source invalidation; currently unavailable.",
-        "description": " This build fails before effects with ACTIVATION_INTEGRATION_NOT_READY; it never reports a fabricated pending operation.",
+        "summary": "End membership through durable Scheduling coordination and Learning authority invalidation.",
         "operationId": "endMembership",
         "parameters": [
           {
@@ -4455,7 +7857,6 @@
           "Schools"
         ],
         "summary": "Assign a teacher to a group. Activation is unavailable without Scheduling coordination.",
-        "description": " This build fails before effects with ACTIVATION_INTEGRATION_NOT_READY; it never reports a fabricated pending operation.",
         "operationId": "assignTeacher",
         "parameters": [
           {
@@ -4631,8 +8032,7 @@
         "tags": [
           "Schools"
         ],
-        "summary": "Change school status. Requires coordinated eligibility invalidation; currently unavailable.",
-        "description": " This build fails before effects with ACTIVATION_INTEGRATION_NOT_READY; it never reports a fabricated pending operation.",
+        "summary": "Change school status through durable Scheduling coordination and Learning authority invalidation.",
         "operationId": "changeSchoolStatus",
         "parameters": [
           {
@@ -4799,8 +8199,7 @@
         "tags": [
           "Schools"
         ],
-        "summary": "Change branch status. Requires coordinated eligibility invalidation; currently unavailable.",
-        "description": " This build fails before effects with ACTIVATION_INTEGRATION_NOT_READY; it never reports a fabricated pending operation.",
+        "summary": "Change branch status through durable Scheduling coordination and Learning authority invalidation.",
         "operationId": "changeBranchStatus",
         "parameters": [
           {
@@ -5049,6 +8448,57 @@
           }
         }
       },
+      "AssistantAccessRequest": {
+        "required": [
+          "schoolId",
+          "actorUserId"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "AssistantAccessResponse": {
+        "required": [
+          "schoolId",
+          "actorUserId",
+          "allowed",
+          "canAudit",
+          "accessStamp",
+          "validUntil"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "allowed": {
+            "type": "boolean"
+          },
+          "canAudit": {
+            "type": "boolean"
+          },
+          "accessStamp": {
+            "type": "string"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "BranchResponse": {
         "required": [
           "branchId",
@@ -5186,6 +8636,119 @@
           }
         }
       },
+      "DocumentAuthorityRequest": {
+        "required": [
+          "schoolId",
+          "actorUserId",
+          "enrollmentId",
+          "teacherId"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "enrollmentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "teacherId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "DocumentAuthorityResponse": {
+        "required": [
+          "schoolId",
+          "actorUserId",
+          "enrollmentId",
+          "studentId",
+          "schoolName",
+          "category",
+          "enrollmentStatus",
+          "schoolRevision",
+          "enrollmentRevision",
+          "administrator",
+          "self",
+          "assignedTeacher",
+          "validUntil"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "enrollmentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "studentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "enrollmentStatus": {
+            "type": "string"
+          },
+          "schoolRevision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "enrollmentRevision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "administrator": {
+            "type": "boolean"
+          },
+          "self": {
+            "type": "boolean"
+          },
+          "assignedTeacher": {
+            "type": "boolean"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "EligibilityResponse": {
         "required": [
           "enrollmentId",
@@ -5278,11 +8841,42 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "groupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "programVersionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
           }
         }
       },
       "EnrollmentStatus": {
-        "type": "integer"
+        "enum": [
+          "Active",
+          "Completed",
+          "Withdrawn",
+          "Transferred",
+          "Cancelled"
+        ]
+      },
+      "GrantPermissionRequest": {
+        "required": [
+          "permission"
+        ],
+        "type": "object",
+        "properties": {
+          "permission": {
+            "type": "string"
+          }
+        }
       },
       "GroupAssignmentRequest": {
         "required": [
@@ -5508,7 +9102,11 @@
         }
       },
       "InvitationStatus": {
-        "type": "integer"
+        "enum": [
+          "Pending",
+          "Accepted",
+          "Revoked"
+        ]
       },
       "IssueInvitationRequest": {
         "required": [
@@ -5529,6 +9127,273 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "LearningAuthorityRequest": {
+        "required": [
+          "schoolId",
+          "actorUserId"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "enrollmentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "teacherId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "groupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "evidenceRevalidation": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "LearningAuthorityResponse": {
+        "required": [
+          "schoolId",
+          "actorUserId",
+          "enrollmentId",
+          "studentId",
+          "category",
+          "enrollmentStatus",
+          "schoolRevision",
+          "enrollmentRevision",
+          "allowed",
+          "administrator",
+          "teacher",
+          "assessor",
+          "self",
+          "assignedTeacher",
+          "groupId",
+          "programVersionId",
+          "branchId",
+          "validUntil",
+          "authorityBasis"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "enrollmentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "studentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "category": {
+            "type": "string"
+          },
+          "enrollmentStatus": {
+            "type": "string"
+          },
+          "schoolRevision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "enrollmentRevision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "allowed": {
+            "type": "boolean"
+          },
+          "administrator": {
+            "type": "boolean"
+          },
+          "teacher": {
+            "type": "boolean"
+          },
+          "assessor": {
+            "type": "boolean"
+          },
+          "self": {
+            "type": "boolean"
+          },
+          "assignedTeacher": {
+            "type": "boolean"
+          },
+          "groupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "programVersionId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "authorityBasis": {
+            "type": "string"
+          },
+          "revisionEffectiveAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "revisionEffectScope": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "LearningParticipant": {
+        "required": [
+          "enrollmentId",
+          "studentId"
+        ],
+        "type": "object",
+        "properties": {
+          "enrollmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "LearningPlanningResourcesRequest": {
+        "required": [
+          "schoolId",
+          "actorUserId",
+          "enrollmentId",
+          "groupId",
+          "teacherId"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "enrollmentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "groupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "teacherId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "LearningPlanningResourcesResponse": {
+        "required": [
+          "schoolId",
+          "category",
+          "branchId",
+          "teacherIds",
+          "participants",
+          "validUntil"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "category": {
+            "type": "string"
+          },
+          "branchId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "teacherIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LearningParticipant"
+            }
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -5572,6 +9437,78 @@
               "string"
             ],
             "format": "int64"
+          }
+        }
+      },
+      "MembershipReviewResponse": {
+        "required": [
+          "reviewId",
+          "schoolId",
+          "targetKind",
+          "targetId",
+          "reasonCode",
+          "subjectRole",
+          "subjectUserId",
+          "sourceEventId",
+          "raisedAt",
+          "resolvedAt",
+          "resolvedByUserId",
+          "resolutionNote"
+        ],
+        "type": "object",
+        "properties": {
+          "reviewId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetKind": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reasonCode": {
+            "type": "string"
+          },
+          "subjectRole": {
+            "type": "string"
+          },
+          "subjectUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceEventId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "raisedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "resolvedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "resolvedByUserId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "resolutionNote": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -5683,8 +9620,83 @@
           }
         }
       },
+      "NotificationRecipientsRequest": {
+        "required": [
+          "schoolId",
+          "enrollmentIds",
+          "teacherId",
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "enrollmentIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "teacherId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string"
+          }
+        }
+      },
+      "NotificationRecipientsResponse": {
+        "required": [
+          "schoolId",
+          "schoolName",
+          "schoolRevision",
+          "userIds",
+          "validUntil"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "schoolName": {
+            "type": "string"
+          },
+          "schoolRevision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "userIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "OperationStatus": {
-        "type": "integer"
+        "enum": [
+          "Pending",
+          "Committed",
+          "Rejected",
+          "ReconciliationPending"
+        ]
       },
       "ParticipantResponse": {
         "required": [
@@ -5817,6 +9829,17 @@
           }
         }
       },
+      "ResolveMembershipReviewRequest": {
+        "required": [
+          "note"
+        ],
+        "type": "object",
+        "properties": {
+          "note": {
+            "type": "string"
+          }
+        }
+      },
       "RevokeInvitationRequest": {
         "required": [
           "expectedRevision",
@@ -5834,6 +9857,343 @@
           },
           "reason": {
             "type": "string"
+          }
+        }
+      },
+      "RevokePermissionRequest": {
+        "required": [
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "RuleScopeRequest": {
+        "required": [
+          "schoolId",
+          "actorUserId",
+          "scopeKind",
+          "scopeResourceId"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scopeKind": {
+            "type": "string"
+          },
+          "scopeResourceId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "RuleScopeResponse": {
+        "required": [
+          "allowed",
+          "schoolId",
+          "actorUserId",
+          "scopeKind",
+          "scopeResourceId"
+        ],
+        "type": "object",
+        "properties": {
+          "allowed": {
+            "type": "boolean"
+          },
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scopeKind": {
+            "type": "string"
+          },
+          "scopeResourceId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "SchedulingDecision": {
+        "required": [
+          "schoolId",
+          "operationId",
+          "beforeRevision",
+          "afterRevision",
+          "payloadHash",
+          "localApplied",
+          "state"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "operationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "beforeRevision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "afterRevision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "payloadHash": {
+            "type": "string"
+          },
+          "localApplied": {
+            "type": "boolean"
+          },
+          "state": {
+            "type": "string"
+          }
+        }
+      },
+      "SchedulingInput": {
+        "required": [
+          "schoolId",
+          "branchId",
+          "teacherId",
+          "category",
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "teacherId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "category": {
+            "type": "string"
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "enrollmentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "studentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "vehicleId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "groupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "SchedulingParticipant": {
+        "required": [
+          "enrollmentId",
+          "studentId"
+        ],
+        "type": "object",
+        "properties": {
+          "enrollmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "SchedulingSnapshot": {
+        "required": [
+          "schoolId",
+          "schoolRevision",
+          "actingUserId",
+          "teacherId",
+          "branchId",
+          "allowed",
+          "administrator",
+          "ruleOwner",
+          "canCorrect",
+          "teacherAssessor",
+          "teacherMember",
+          "enrollmentId",
+          "studentId",
+          "groupId",
+          "membershipRevision",
+          "category",
+          "participants",
+          "startsAt",
+          "endsAt",
+          "validUntil"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "schoolRevision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "actingUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "teacherId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "allowed": {
+            "type": "boolean"
+          },
+          "administrator": {
+            "type": "boolean"
+          },
+          "ruleOwner": {
+            "type": "boolean"
+          },
+          "canCorrect": {
+            "type": "boolean"
+          },
+          "teacherAssessor": {
+            "type": "boolean"
+          },
+          "teacherMember": {
+            "type": "boolean"
+          },
+          "enrollmentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "studentId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "groupId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "membershipRevision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "category": {
+            "type": "string"
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SchedulingParticipant"
+            }
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SchedulingSnapshotRequest": {
+        "required": [
+          "request",
+          "actorUserId"
+        ],
+        "type": "object",
+        "properties": {
+          "request": {
+            "$ref": "#/components/schemas/SchedulingInput"
+          },
+          "actorUserId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -5923,6 +10283,48 @@
           "validUntil": {
             "type": "string",
             "format": "date-time"
+          },
+          "issuerUserId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "SchoolChangeResponse": {
+        "required": [
+          "operationId",
+          "schoolId",
+          "state",
+          "resultId",
+          "schoolRevision"
+        ],
+        "type": "object",
+        "properties": {
+          "operationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "state": {
+            "type": "string"
+          },
+          "resultId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "schoolRevision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
           }
         }
       },
@@ -5956,10 +10358,17 @@
         }
       },
       "SchoolRole": {
-        "type": "integer"
+        "enum": [
+          "Student",
+          "Teacher",
+          "Administrator"
+        ]
       },
       "SchoolStatus": {
-        "type": "integer"
+        "enum": [
+          "Active",
+          "Inactive"
+        ]
       },
       "StatusRequest": {
         "required": [
@@ -5999,6 +10408,23 @@
               "string"
             ],
             "format": "int64"
+          }
+        }
+      },
+      "TeacherResourceResponse": {
+        "required": [
+          "teacherId",
+          "userId"
+        ],
+        "type": "object",
+        "properties": {
+          "teacherId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
           }
         }
       },
@@ -6045,6 +10471,166 @@
             ]
           }
         }
+      },
+      "VehicleAuthorityRequest": {
+        "required": [
+          "schoolId"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "actorUserId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "teacherId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "schoolMembershipId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          }
+        }
+      },
+      "VehicleAuthorityResponse": {
+        "required": [
+          "allowed",
+          "schoolId",
+          "branchId",
+          "actorUserId",
+          "teacherId",
+          "schoolMembershipId",
+          "teacherUserId",
+          "schoolRevision",
+          "branchRevision",
+          "membershipRevision",
+          "validUntil"
+        ],
+        "type": "object",
+        "properties": {
+          "allowed": {
+            "type": "boolean"
+          },
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "branchId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "actorUserId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "teacherId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "schoolMembershipId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "teacherUserId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "schoolRevision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "branchRevision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "membershipRevision": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "validUntil": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "WorkspaceResponse": {
+        "required": [
+          "schoolId",
+          "name",
+          "roles",
+          "permissions"
+        ],
+        "type": "object",
+        "properties": {
+          "schoolId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
       }
     },
     "securitySchemes": {
@@ -6063,13 +10649,34 @@
   },
   "tags": [
     {
+      "name": "AssistantAccess"
+    },
+    {
+      "name": "DocumentIntegration"
+    },
+    {
       "name": "InternalSchool"
     },
     {
       "name": "Invitations"
     },
     {
+      "name": "LearningIntegration"
+    },
+    {
+      "name": "MembershipReviews"
+    },
+    {
       "name": "MySchool"
+    },
+    {
+      "name": "NotificationRecipients"
+    },
+    {
+      "name": "SchedulingIntegration"
+    },
+    {
+      "name": "SchoolPermissions"
     },
     {
       "name": "Schools"

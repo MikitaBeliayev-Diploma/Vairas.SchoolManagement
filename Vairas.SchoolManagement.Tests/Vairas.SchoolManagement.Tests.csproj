@@ -18,6 +18,6 @@
     <ProjectReference Include="../../Vairas.UserManagement/Vairas.UserManagement/Vairas.UserManagement.csproj" Aliases="UserManagement" Condition="'$(EnableServiceIntegrationTests)' == 'true'" />
   </ItemGroup>
   <ItemGroup Condition="'$(EnableServiceIntegrationTests)' != 'true'">
-    <Compile Remove="IntegrationEnvironment.cs;SchoolIntegrationTests.cs" />
+    <Compile Remove="IntegrationEnvironment.cs;SchoolIntegrationTests.cs;TestUser.cs;ConfiguredFactory.cs" />
   </ItemGroup>
 </Project>

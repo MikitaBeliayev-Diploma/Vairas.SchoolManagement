@@ -4,9 +4,13 @@ using Vairas.SchoolManagement.Business;
 using Vairas.SchoolManagement.Integrations;
 namespace Vairas.SchoolManagement.Controllers;
 
-[ApiController, Authorize(Policy = "SchoolEntry"), Route("api/v1/schools/{schoolId:guid}/invitations")]
-public sealed class InvitationsController(ISchoolService school, ISchoolActorFactory actors) : ControllerBase
+[Authorize(Policy = "SchoolEntry"), Route("api/v1/schools/{schoolId:guid}/invitations")]
+public sealed class InvitationsController(ISchoolService school, ISchoolActorFactory actors) : BaseApiController
 {
+    /// <summary>List invitation metadata for the current school administrator; secrets are never returned.</summary>
+    [HttpGet(Name = "listSchoolInvitations")]
+    public async Task<ActionResult<InvitationListResponse>> List(Guid schoolId, int? limit, string? cursor, CancellationToken ct) =>
+        Ok(await school.SchoolInvitationsAsync(schoolId, limit ?? 20, cursor, await actors.CreateAsync(HttpContext, ct), ct));
     /// <summary>Issue a 24-hour invitation to an exact UserId, with no membership activation.</summary>
     [HttpPost(Name = "issueInvitation")]
     public async Task<ActionResult<MutationResponse<InvitationResponse>>> Issue(Guid schoolId, IssueInvitationRequest request, [FromHeader(Name = "Idempotency-Key")] Guid operation, CancellationToken ct)
@@ -24,13 +28,4 @@ public sealed class InvitationsController(ISchoolService school, ISchoolActorFac
     [HttpPost("{invitationId:guid}/revoke", Name = "revokeInvitation")]
     public async Task<ActionResult<MutationResponse<InvitationResponse>>> Revoke(Guid schoolId, Guid invitationId, RevokeInvitationRequest request, [FromHeader(Name = "Idempotency-Key")] Guid operation, CancellationToken ct) => Ok(await school.RevokeAsync(schoolId, invitationId, operation, request, await actors.CreateAsync(HttpContext, ct), ct));
 }
-[ApiController, Authorize(Policy = "SchoolEntry"), Route("api/v1/users/me")]
-public sealed class MySchoolController(ISchoolService school, ISchoolActorFactory actors) : ControllerBase
-{
-    /// <summary>List only invitations addressed to the authenticated global UserId.</summary>
-    [HttpGet("invitations", Name = "getMyInvitations")]
-    public async Task<ActionResult<InvitationListResponse>> Invitations(Guid? schoolId, int? limit, string? cursor, CancellationToken ct) => Ok(await school.MyInvitationsAsync(schoolId, limit ?? 20, cursor, await actors.CreateAsync(HttpContext, ct), ct));
-    /// <summary>Read only the caller's enrollments, independently across schools and categories.</summary>
-    [HttpGet("enrollments", Name = "getMyEnrollments")]
-    public async Task<ActionResult<IReadOnlyList<EnrollmentResponse>>> Enrollments(CancellationToken ct) => Ok(await school.MyEnrollmentsAsync(await actors.CreateAsync(HttpContext, ct), ct));
-}
+

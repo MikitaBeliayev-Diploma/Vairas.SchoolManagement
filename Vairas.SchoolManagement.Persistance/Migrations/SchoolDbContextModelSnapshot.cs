@@ -301,6 +301,74 @@ namespace Vairas.SchoolManagement.Persistance.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Vairas.SchoolManagement.Domain.MembershipReview", b =>
+                {
+                    b.Property<Guid>("ReviewId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("review_id");
+
+                    b.Property<DateTimeOffset>("RaisedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("raised_at");
+
+                    b.Property<string>("ReasonCode")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("reason_code");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("resolution_note");
+
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<Guid?>("ResolvedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resolved_by_user_id");
+
+                    b.Property<Guid>("SchoolId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("school_id");
+
+                    b.Property<Guid>("SourceEventId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_event_id");
+
+                    b.Property<string>("SubjectRole")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasColumnName("subject_role");
+
+                    b.Property<Guid>("SubjectUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("subject_user_id");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_id");
+
+                    b.Property<string>("TargetKind")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("target_kind");
+
+                    b.HasKey("ReviewId");
+
+                    b.HasIndex("SchoolId", "ResolvedAt");
+
+                    b.HasIndex("SourceEventId", "TargetKind", "TargetId")
+                        .IsUnique();
+
+                    b.ToTable("membership_review", (string)null);
+                });
+
             modelBuilder.Entity("Vairas.SchoolManagement.Domain.School", b =>
                 {
                     b.Property<Guid>("SchoolId")
@@ -337,6 +405,118 @@ namespace Vairas.SchoolManagement.Persistance.Migrations
 
                             t.HasCheckConstraint("school_revision_time", "revision > 0 AND updated_at >= created_at");
                         });
+                });
+
+            modelBuilder.Entity("Vairas.SchoolManagement.Domain.SchoolCoordination", b =>
+                {
+                    b.Property<Guid>("OperationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("operation_id");
+
+                    b.Property<Guid>("SchoolId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("school_id");
+
+                    b.Property<Guid>("ActorUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_user_id");
+
+                    b.Property<long>("AfterRevision")
+                        .HasColumnType("bigint")
+                        .HasColumnName("after_revision");
+
+                    b.Property<long>("BeforeRevision")
+                        .HasColumnType("bigint")
+                        .HasColumnName("before_revision");
+
+                    b.Property<string>("CommandJson")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("command_json");
+
+                    b.Property<DateTimeOffset>("EffectiveFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("effective_from");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("fingerprint");
+
+                    b.Property<Guid?>("LeaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lease_id");
+
+                    b.Property<DateTimeOffset?>("LeaseUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("lease_until");
+
+                    b.Property<string>("PayloadHash")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("payload_hash");
+
+                    b.Property<Guid>("ResultId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("result_id");
+
+                    b.Property<string>("State")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("state");
+
+                    b.Property<string>("TransitionJson")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("transition_json");
+
+                    b.HasKey("OperationId", "SchoolId");
+
+                    b.ToTable("school_coordination", (string)null);
+                });
+
+            modelBuilder.Entity("Vairas.SchoolManagement.Domain.SchoolIntegrationInbox", b =>
+                {
+                    b.Property<Guid>("EventId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("event_id");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("event_type");
+
+                    b.Property<string>("Fingerprint")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("fingerprint");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("outcome");
+
+                    b.Property<DateTimeOffset>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processed_at");
+
+                    b.Property<string>("Producer")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("producer");
+
+                    b.Property<int>("ReviewsRaised")
+                        .HasColumnType("integer")
+                        .HasColumnName("reviews_raised");
+
+                    b.HasKey("EventId");
+
+                    b.ToTable("integration_inbox", (string)null);
                 });
 
             modelBuilder.Entity("Vairas.SchoolManagement.Domain.SchoolInvitation", b =>
@@ -443,6 +623,71 @@ namespace Vairas.SchoolManagement.Persistance.Migrations
 
                             t.HasCheckConstraint("invitation_state_shape", "(status = 'Pending' AND accepted_operation_id IS NULL AND accepted_at IS NULL AND result_membership_id IS NULL AND result_enrollment_id IS NULL AND revoked_operation_id IS NULL AND revoked_at IS NULL) OR (status = 'Accepted' AND accepted_operation_id IS NOT NULL AND accepted_at IS NOT NULL AND result_membership_id IS NOT NULL AND revoked_operation_id IS NULL AND revoked_at IS NULL AND ((role = 'Student' AND result_enrollment_id IS NOT NULL) OR (role <> 'Student' AND result_enrollment_id IS NULL))) OR (status = 'Revoked' AND revoked_operation_id IS NOT NULL AND revoked_at IS NOT NULL AND accepted_operation_id IS NULL AND accepted_at IS NULL AND result_membership_id IS NULL AND result_enrollment_id IS NULL)");
                         });
+                });
+
+            modelBuilder.Entity("Vairas.SchoolManagement.Domain.SchoolLearningOutbox", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid>("AggregateId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("aggregate_id");
+
+                    b.Property<long>("AggregateVersion")
+                        .HasColumnType("bigint")
+                        .HasColumnName("aggregate_version");
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer")
+                        .HasColumnName("attempts");
+
+                    b.Property<string>("CorrelationId")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("correlation_id");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("event_type");
+
+                    b.Property<Guid?>("LeaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lease_id");
+
+                    b.Property<DateTimeOffset?>("LeaseUntil")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("lease_until");
+
+                    b.Property<DateTimeOffset>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_attempt_at");
+
+                    b.Property<DateTimeOffset>("OccurredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at");
+
+                    b.Property<string>("Payload")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("payload");
+
+                    b.Property<Guid>("SchoolId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("school_id");
+
+                    b.Property<DateTimeOffset?>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SentAt", "NextAttemptAt");
+
+                    b.ToTable("school_learning_outbox", (string)null);
                 });
 
             modelBuilder.Entity("Vairas.SchoolManagement.Domain.SchoolMembership", b =>

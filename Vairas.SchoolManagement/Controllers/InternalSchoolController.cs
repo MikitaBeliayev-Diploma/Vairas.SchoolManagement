@@ -3,9 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Vairas.SchoolManagement.Business;
 namespace Vairas.SchoolManagement.Controllers;
 
-[ApiController, Route("internal/v1")]
-public sealed class InternalSchoolController(ISchoolService school) : ControllerBase
+[Route("internal/v1")]
+public sealed class InternalSchoolController(ISchoolService school) : BaseApiController
 {
+    /// <summary>Validate exact current school/branch/administrator/teacher authority for Vehicle Management.</summary>
+    [HttpPost("vehicle-authority/validate", Name = "validateVehicleAuthority"), Authorize(Policy = "school.vehicle-authority.read")]
+    public async Task<ActionResult<VehicleAuthorityResponse>> VehicleAuthority(VehicleAuthorityRequest request, CancellationToken ct) => Ok(await school.VehicleAuthorityAsync(request, ct));
     /// <summary>Local-only read-only invitation/bootstrap validation for User Management; never calls UM back.</summary>
     [HttpPost("profile-provisioning/validate", Name = "validateProfileProvisioning"), Authorize(Policy = "school.profile-provisioning")]
     public async Task<ActionResult<SchoolAuthorityResponse>> Provisioning(SchoolAuthorityRequest request, CancellationToken ct) => Ok(await school.ProvisioningAsync(request, ct));

@@ -1,7 +1,7 @@
 using Vairas.SchoolManagement.Domain;
 namespace Vairas.SchoolManagement.Business;
 
-public sealed partial class SchoolService(ISchoolStore store, IUserActivity activity, SchoolAccessOptions access, TimeProvider clock) : ISchoolService
+public sealed partial class SchoolService(ISchoolStore store, IUserActivity activity, SchoolAccessOptions access, TimeProvider clock, ISchoolSchedulingService? coordination = null, ISchoolSchedulingClient? schedulingClient = null) : ISchoolService
 {
     private bool Operator(Guid user) => access.PlatformOperatorUserIds.Contains(user);
     private async Task<ISchoolSession> Open(Guid school, SchoolActor actor, bool admin, bool write, CancellationToken ct)
@@ -13,16 +13,21 @@ public sealed partial class SchoolService(ISchoolStore store, IUserActivity acti
         {
             var now = await session.NowAsync(ct);
             SchoolRules.Fresh(actor, now);
-            var row = await session.FindAsync<School>(x => x.SchoolId == school, ct) ?? throw SchoolException.Missing();
-            if (row.Status != SchoolStatus.Active)
-                throw SchoolException.Denied();
             var memberships = await session.ListAsync<SchoolMembership>(x => x.SchoolId == school && x.UserId == actor.UserId, ct);
             if (!Operator(actor.UserId) && !memberships.Any(m => SchoolRules.Effective(m, now) && (!admin || m.Role == SchoolRole.Administrator)))
-                throw SchoolException.Missing();
+                throw SchoolErrors.Missing();
+            if (write && await HasPendingCoordinationAsync(session, school, ct)) throw SchoolErrors.Dependency();
+            var row = await session.FindAsync<School>(x => x.SchoolId == school, ct) ?? throw SchoolErrors.Missing();
+            if (row.Status != SchoolStatus.Active)
+                throw SchoolErrors.Denied();
             return session;
         }
         catch { await session.DisposeAsync(); throw; }
     }
+    private static async Task<bool> HasPendingCoordinationAsync(ISchoolSession session, Guid school, CancellationToken ct) =>
+        (await session.ListAsync<SchoolOperation>(x => x.SchoolId == school && x.CoordinationRequired &&
+            (x.Status == OperationStatus.Pending || x.Status == OperationStatus.ReconciliationPending), ct)).Count > 0;
+
     private async Task<SchoolMembership?> Admin(ISchoolSession s, Guid school, Guid user, DateTimeOffset now, CancellationToken ct) =>
      (await s.ListAsync<SchoolMembership>(x => x.SchoolId == school && x.UserId == user && x.Role == SchoolRole.Administrator, ct)).SingleOrDefault(x => SchoolRules.Effective(x, now));
     private async Task<bool> CanGroup(ISchoolSession s, Guid school, Guid group, SchoolActor actor, CancellationToken ct)
@@ -110,7 +115,7 @@ public sealed partial class SchoolService(ISchoolStore store, IUserActivity acti
     {
         SchoolRules.Id(id);
         await using var s = await Open(school, actor, false, false, ct);
-        return SchoolRules.Branch(await s.FindAsync<Branch>(x => x.SchoolId == school && x.BranchId == id, ct) ?? throw SchoolException.Missing());
+        return SchoolRules.Branch(await s.FindAsync<Branch>(x => x.SchoolId == school && x.BranchId == id, ct) ?? throw SchoolErrors.Missing());
     }
     public async Task<MutationResponse<BranchResponse>> SaveBranchAsync(Guid school, Guid? id, Guid operation, CreateBranchRequest request, long? expected, SchoolActor actor, CancellationToken ct)
     {
@@ -122,7 +127,7 @@ public sealed partial class SchoolService(ISchoolStore store, IUserActivity acti
         }
         request = new(SchoolRules.Text(request.Name, 200), SchoolRules.Optional(request.AddressLine, 300), SchoolRules.Optional(request.City, 120), SchoolRules.Optional(request.PostalCode, 30), SchoolRules.Optional(request.CountryCode, 2)?.ToUpperInvariant());
         if (request.CountryCode is not null && (request.CountryCode.Length != 2 || request.CountryCode.Any(c => c is < 'A' or > 'Z')))
-            throw SchoolException.Invalid();
+            throw SchoolErrors.Invalid();
         var command = id.HasValue ? "UpdateBranch" : "CreateBranch";
         var fingerprint = SchoolRules.Fingerprint(command, id, new
         {
@@ -133,11 +138,11 @@ public sealed partial class SchoolService(ISchoolStore store, IUserActivity acti
         var prior = await Replay(s, school, operation, fingerprint, actor, ct);
         var row = await s.FindAsync<Branch>(x => x.SchoolId == school && x.BranchId == (prior != null ? prior.TargetId : id), ct);
         if (prior is not null)
-            return new(operation, SchoolRules.Branch(row ?? throw SchoolException.Missing()), true);
+            return new(operation, SchoolRules.Branch(row ?? throw SchoolErrors.Missing()), true);
         if (id.HasValue)
         {
             if (row is null)
-                throw SchoolException.Missing();
+                throw SchoolErrors.Missing();
             SchoolRules.Match(expected!.Value, row.Revision);
             row.Revision++;
         }
@@ -187,8 +192,8 @@ public sealed partial class SchoolService(ISchoolStore store, IUserActivity acti
         SchoolRules.Id(id);
         await using var s = await Open(school, actor, false, false, ct);
         if (!await CanGroup(s, school, id, actor, ct))
-            throw SchoolException.Missing();
-        return SchoolRules.Group(await s.FindAsync<TrainingGroup>(x => x.SchoolId == school && x.GroupId == id, ct) ?? throw SchoolException.Missing());
+            throw SchoolErrors.Missing();
+        return SchoolRules.Group(await s.FindAsync<TrainingGroup>(x => x.SchoolId == school && x.GroupId == id, ct) ?? throw SchoolErrors.Missing());
     }
     public async Task<MutationResponse<GroupResponse>> SaveGroupAsync(Guid school, Guid? id, Guid operation, CreateGroupRequest request, long? expected, SchoolActor actor, CancellationToken ct)
     {
@@ -211,20 +216,20 @@ public sealed partial class SchoolService(ISchoolStore store, IUserActivity acti
         var prior = await Replay(s, school, operation, fingerprint, actor, ct);
         var row = await s.FindAsync<TrainingGroup>(x => x.SchoolId == school && x.GroupId == (prior != null ? prior.TargetId : id), ct);
         if (prior is not null)
-            return new(operation, SchoolRules.Group(row ?? throw SchoolException.Missing()), true);
+            return new(operation, SchoolRules.Group(row ?? throw SchoolErrors.Missing()), true);
         if (id.HasValue)
         {
             if (row is null)
-                throw SchoolException.Missing();
+                throw SchoolErrors.Missing();
             SchoolRules.Match(expected!.Value, row.Revision);
             if (request.BranchId != row.BranchId || request.CategoryCode != row.CategoryCode)
-                throw SchoolException.Gate();
+                throw SchoolErrors.Gate();
             row.Revision++;
         }
         else
         {
             if (request.BranchId is Guid branch && await s.FindAsync<Branch>(x => x.SchoolId == school && x.BranchId == branch && x.Status == SchoolStatus.Active, ct) is null)
-                throw SchoolException.Missing();
+                throw SchoolErrors.Missing();
             row = new()
             {
                 GroupId = Guid.NewGuid(),
@@ -253,16 +258,16 @@ public sealed partial class SchoolService(ISchoolStore store, IUserActivity acti
     {
         SchoolRules.Id(id);
         await using var s = await Open(school, actor, false, false, ct);
-        var row = await s.FindAsync<StudentEnrollment>(x => x.SchoolId == school && x.EnrollmentId == id, ct) ?? throw SchoolException.Missing();
+        var row = await s.FindAsync<StudentEnrollment>(x => x.SchoolId == school && x.EnrollmentId == id, ct) ?? throw SchoolErrors.Missing();
         if (!Operator(actor.UserId) && actor.StudentId != row.StudentId && await Admin(s, school, actor.UserId, await s.NowAsync(ct), ct) is null)
         {
             if (actor.TeacherId is not Guid teacher)
-                throw SchoolException.Missing();
+                throw SchoolErrors.Missing();
             var now = await s.NowAsync(ct);
             var memberships = await s.ListAsync<SchoolMembership>(x => x.SchoolId == school && x.UserId == actor.UserId && x.Role == SchoolRole.Teacher, ct);
             var groups = (await s.ListAsync<StudentGroupMembership>(x => x.SchoolId == school && x.EnrollmentId == id, ct)).Where(x => x.JoinedAt <= now && (x.LeftAt == null || x.LeftAt > now)).Select(x => x.GroupId).ToArray();
             if (!memberships.Any(x => SchoolRules.Effective(x, now)) || !(await s.ListAsync<TeacherGroupAssignment>(x => x.SchoolId == school && x.TeacherId == teacher && groups.Contains(x.GroupId), ct)).Any(x => x.AssignedAt <= now && (x.EndedAt == null || x.EndedAt > now)))
-                throw SchoolException.Missing();
+                throw SchoolErrors.Missing();
         }
         return SchoolRules.Enrollment(row);
     }
@@ -283,12 +288,27 @@ public sealed partial class SchoolService(ISchoolStore store, IUserActivity acti
     public async Task<PlanningInputsResponse> PlanningAsync(Guid school, SchoolActor actor, CancellationToken ct)
     {
         await using var s = await Open(school, actor, true, false, ct);
-        var missing = new List<string> { "SchedulingEligibilityGate", "LearningProgrammeBasis", "SchedulingAvailability" };
-        if ((await s.ListAsync<TrainingGroup>(x => x.SchoolId == school && x.EndedAt == null, ct)).Count == 0)
+        var now = await s.NowAsync(ct);
+        // These owners are evaluated for the selected draft period at submission, not guessed by this preliminary read.
+        var missing = new List<string> { "DraftSpecificSchedulingValidation", "LearningRequirementValidation" };
+        var groups = await s.ListAsync<TrainingGroup>(x => x.SchoolId == school && x.StartedAt <= now && (x.EndedAt == null || x.EndedAt > now), ct);
+        var enrollments = await s.ListAsync<StudentEnrollment>(x => x.SchoolId == school && x.Status == EnrollmentStatus.Active, ct);
+        var memberships = await s.ListAsync<StudentGroupMembership>(x => x.SchoolId == school && x.JoinedAt <= now && (x.LeftAt == null || x.LeftAt > now), ct);
+        if (groups.Count == 0)
             missing.Add("TrainingGroups");
-        if ((await s.ListAsync<StudentEnrollment>(x => x.SchoolId == school && x.Status == EnrollmentStatus.Active, ct)).Count == 0)
+        if (enrollments.Count == 0)
             missing.Add("ActiveEnrollments");
-        return new(school, false, missing);
+        var gaps = enrollments.OrderBy(x => x.EnrollmentId).Select(enrollment =>
+        {
+            var issues = new List<string>();
+            var own = memberships.Where(x => x.EnrollmentId == enrollment.EnrollmentId && groups.Any(g => g.GroupId == x.GroupId)).ToArray();
+            if (enrollment.StartedAt > now || enrollment.EndedAt <= now) issues.Add("EnrollmentNotEffective");
+            if (own.Length == 0) issues.Add("TrainingGroup");
+            if (own.Length == 0 || own.Any(x => x.AssociationProgramVersionId == Guid.Empty)) issues.Add("ProgrammeAssociation");
+            if (own.Any(x => groups.Any(g => g.GroupId == x.GroupId && g.CategoryCode != null && g.CategoryCode != enrollment.CategoryCode))) issues.Add("GroupCategoryMismatch");
+            return new EnrollmentPlanningInputsResponse(enrollment.EnrollmentId, issues);
+        }).ToArray();
+        return new(school, false, missing) { Enrollments = gaps };
     }
     public async Task RejectActivationAsync(Guid school, string target, Guid id, Guid operation, long? revision, SchoolActor actor, CancellationToken ct)
     {
@@ -307,7 +327,7 @@ public sealed partial class SchoolService(ISchoolStore store, IUserActivity acti
             _ => false
         };
         if (!exists)
-            throw SchoolException.Missing();
-        throw SchoolException.Gate();
+            throw SchoolErrors.Missing();
+        throw SchoolErrors.Gate();
     }
 }

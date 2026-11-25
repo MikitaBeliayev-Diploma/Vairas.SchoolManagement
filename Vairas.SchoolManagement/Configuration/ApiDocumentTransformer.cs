@@ -1,14 +1,16 @@
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
+using Microsoft.Extensions.Options;
+using Vairas.SchoolManagement.Configuration.Options;
 namespace Vairas.SchoolManagement.Configuration;
 
-public sealed class ApiDocumentTransformer : IOpenApiDocumentTransformer
+public sealed class ApiDocumentTransformer(IOptions<SchedulingDependencyOptions> scheduling) : IOpenApiDocumentTransformer
 {
     public Task TransformAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken ct)
     {
         document.Info.Title = "Vairas School Management API";
         document.Info.Version = "1.0.0";
-        document.Info.Description = "School-local organization, target-bound invitations and retained roster evidence. New eligibility activation is unavailable until verified Scheduling coordination exists. No learning hours or credentials are owned here.";
+        document.Info.Description = "School-local organization, target-bound invitations and retained roster evidence. Eligibility activation uses optional durable Scheduling coordination; disabled or missing providers fail closed. No learning hours or credentials are owned here.";
         document.Components ??= new();
         document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
         {
@@ -23,7 +25,7 @@ public sealed class ApiDocumentTransformer : IOpenApiDocumentTransformer
                 var internalRoute = path.StartsWith("/internal/", StringComparison.Ordinal);
                 operation.Security = [new() { [new OpenApiSecuritySchemeReference(internalRoute ? "workloadBearer" : "bearerAuth", document)] = [] }];
                 if (internalRoute)
-                    operation.Description = (operation.Description ?? "") + " Required scope: " + (path.Contains("profile-provisioning", StringComparison.Ordinal) ? "school.profile-provisioning" : path.EndsWith("/eligibility", StringComparison.Ordinal) ? "school.eligibility.read" : "school.participants.read") + ". Both signed scope and local workload-client allowlist are mandatory.";
+                    operation.Description = (operation.Description ?? "") + " Required scope: " + (path.Contains("/assistant/", StringComparison.Ordinal) ? "school.assistant.read" : path.Contains("/scheduling/coordination/", StringComparison.Ordinal) ? "school.coordination.read" : path.Contains("/scheduling/", StringComparison.Ordinal) ? "school.scheduling.read" : path.Contains("vehicle-authority", StringComparison.Ordinal) ? "school.vehicle-authority.read" : path.Contains("profile-provisioning", StringComparison.Ordinal) ? "school.profile-provisioning" : path.EndsWith("/eligibility", StringComparison.Ordinal) ? "school.eligibility.read" : "school.participants.read") + ". Both signed scope and local workload-client allowlist are mandatory.";
                 foreach (var parameter in operation.Parameters ?? [])
                     if (parameter.Name == "Idempotency-Key" && parameter is OpenApiParameter key)
                     {
@@ -40,7 +42,7 @@ public sealed class ApiDocumentTransformer : IOpenApiDocumentTransformer
                     };
                 foreach (var status in new[] { "400", "401", "403", "404", "409", "410", "415", "422", "500", "503" })
                     operation.Responses.TryAdd(status, new OpenApiResponse { Description = "ProblemDetails with stable code and correlationId; foreign existence and secrets are not disclosed.", Content = new Dictionary<string, OpenApiMediaType> { ["application/problem+json"] = new() { Schema = new OpenApiSchema { Type = JsonSchemaType.Object } } } });
-                if (operation.OperationId is string id && blocked.Contains(id))
+                if (operation.OperationId is string id && blocked.Contains(id) && !scheduling.Value.Enabled)
                 {
                     operation.Responses.Remove("200");
                     operation.Responses.Remove("204");

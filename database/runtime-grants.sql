@@ -49,3 +49,15 @@ ALTER TABLE "school_invitation" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_scope ON "school_invitation" TO v_school_management_runtime USING (school_id=nullif(current_setting('vairas.school_id',true),'')::uuid) WITH CHECK (school_id=nullif(current_setting('vairas.school_id',true),'')::uuid);
 
 GRANT EXECUTE ON FUNCTION public.school_self_discovery(uuid,uuid) TO v_school_management_runtime;
+
+GRANT SELECT,INSERT,UPDATE ON school_coordination TO v_school_management_runtime;
+ALTER TABLE school_coordination ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_scope ON school_coordination TO v_school_management_runtime USING (school_id=nullif(current_setting('vairas.school_id',true),'')::uuid) WITH CHECK (school_id=nullif(current_setting('vairas.school_id',true),'')::uuid);
+GRANT EXECUTE ON FUNCTION public.school_pending_coordination() TO v_school_management_runtime;
+
+-- Learning lifecycle Outbox: same local transaction as the School change.
+GRANT SELECT,INSERT ON school_learning_outbox TO v_school_management_runtime;
+ALTER TABLE school_learning_outbox ENABLE ROW LEVEL SECURITY;
+CREATE POLICY tenant_scope ON school_learning_outbox TO v_school_management_runtime
+ USING(school_id=nullif(current_setting('vairas.school_id',true),'')::uuid)
+ WITH CHECK(school_id=nullif(current_setting('vairas.school_id',true),'')::uuid);

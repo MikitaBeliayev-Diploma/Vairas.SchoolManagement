@@ -293,3 +293,14 @@ Idempotency-Key: 30000000-0000-4000-8000-000000000001
 Content-Type: application/json
 
 {"targetUserId":"{{targetUserId}}"}
+
+### Retained activation outcome (use the original command UUID)
+GET {{baseUrl}}/api/v1/schools/{{schoolId}}/activation-operations/30000000-0000-4000-8000-000000000050
+Authorization: Bearer {{userToken}}
+
+### Platform operator abort before School local commit; keep protection until acknowledgement
+POST {{baseUrl}}/api/v1/schools/{{schoolId}}/activation-operations/30000000-0000-4000-8000-000000000050/abort
+Authorization: Bearer {{userToken}}
+Content-Type: application/json
+
+{"reason":"Operator reviewed and withdrew this pending intent"}

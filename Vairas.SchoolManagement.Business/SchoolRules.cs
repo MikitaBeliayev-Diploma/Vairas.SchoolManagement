@@ -8,27 +8,35 @@ public static class SchoolRules
     public static void Id(Guid id)
     {
         if (id == Guid.Empty)
-            throw SchoolException.Invalid();
+            throw SchoolErrors.Invalid();
     }
     public static void Revision(long? revision)
     {
         if (revision is null or <= 0)
-            throw SchoolException.Invalid();
+            throw SchoolErrors.Invalid();
     }
-    public static string Text(string? text, int max) => text is null || string.IsNullOrWhiteSpace(text) || text.Trim().Length > max ? throw SchoolException.Invalid() : text.Trim();
+    public static string Text(string? text, int max) => text is null || string.IsNullOrWhiteSpace(text) || text.Trim().Length > max ? throw SchoolErrors.Invalid() : text.Trim();
     public static string? Optional(string? text, int max) => text is null ? null : Text(text, max);
+    /// <summary>US-001 / AC-002: reject an enrollment request naming every invalid field; nothing is created.</summary>
+    public static void EnrollmentFields(CreateEnrollmentRequest? request)
+    {
+        var fields = new List<string>();
+        if (request is null || request.StudentId == Guid.Empty) fields.Add("studentId");
+        if (request is null || string.IsNullOrWhiteSpace(request.LicenseCategory) || request.LicenseCategory.Trim().Length > 20) fields.Add("licenseCategory");
+        if (fields.Count > 0) throw new InvalidFieldsException(fields);
+    }
     public static void Fresh(SchoolActor actor, DateTimeOffset now)
     {
         Id(actor.UserId);
         if (actor.ValidUntil <= now)
-            throw SchoolException.Dependency();
+            throw SchoolErrors.Dependency();
     }
     public static bool Covers(DateTimeOffset start, DateTimeOffset? end, DateTimeOffset from, DateTimeOffset to) => start <= from && (end is null || end >= to);
     public static bool Effective(SchoolMembership row, DateTimeOffset now) => row.StartedAt <= now && (row.EndedAt is null || row.EndedAt > now);
     public static void Interval(DateTimeOffset from, DateTimeOffset to)
     {
         if (from >= to || from.Year < 1900 || to.Year > 9998)
-            throw SchoolException.Invalid();
+            throw SchoolErrors.Invalid();
     }
     public static string Fingerprint<T>(string command, Guid? id, T request, SchoolActor actor) =>
      Convert.ToHexStringLower(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new
@@ -43,33 +51,33 @@ public static class SchoolRules
     public static void Replay(SchoolOperation operation, string fingerprint, Guid actor)
     {
         if (operation.ActorUserId != actor || operation.RequestFingerprint != fingerprint)
-            throw SchoolException.Conflict("OPERATION_KEY_REUSE");
+            throw SchoolErrors.Conflict("OPERATION_KEY_REUSE");
         if (operation.Status == OperationStatus.Rejected)
-            throw SchoolException.Conflict(operation.OutcomeCode ?? "BUSINESS_RULE_REJECTED");
+            throw SchoolErrors.Conflict(operation.OutcomeCode ?? "BUSINESS_RULE_REJECTED");
         if (operation.Status != OperationStatus.Committed)
-            throw new SchoolException(503, "OUTCOME_UNKNOWN", "The operation has not been finalized.");
+            throw new ServiceUnavailableException("OUTCOME_UNKNOWN", "The operation has not been finalized.");
     }
     public static void Match(long expected, long actual)
     {
         if (expected != actual)
-            throw SchoolException.Conflict();
+            throw SchoolErrors.Conflict();
     }
     public static void Issue(IssueInvitationRequest request)
     {
         Id(request.TargetUserId);
         if (!Enum.IsDefined(request.Role))
-            throw SchoolException.Invalid();
+            throw SchoolErrors.Invalid();
         if (request.Role == SchoolRole.Student)
             Text(request.CategoryCode, 20);
         else if (request.CategoryCode is not null)
-            throw SchoolException.Invalid();
+            throw SchoolErrors.Invalid();
     }
     public static void Pending(SchoolInvitation invitation, DateTimeOffset now)
     {
         if (invitation.Status != InvitationStatus.Pending)
-            throw SchoolException.Conflict("INVITATION_TERMINAL");
+            throw SchoolErrors.Conflict("INVITATION_TERMINAL");
         if (invitation.ExpiresAt <= now)
-            throw new SchoolException(410, "INVITATION_EXPIRED", "The invitation has expired.");
+            throw new GoneException("INVITATION_EXPIRED", "The invitation has expired.");
     }
     public static InvitationResponse Invitation(SchoolInvitation i, OperationStatus? outcome, DateTimeOffset now) =>
      new(i.InvitationId, i.SchoolId, i.TargetUserId, i.Role, i.CategoryCode, i.Revision, i.CreatedAt, i.ExpiresAt, i.Status,

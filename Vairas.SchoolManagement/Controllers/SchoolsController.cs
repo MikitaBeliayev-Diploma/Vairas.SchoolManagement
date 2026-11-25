@@ -4,9 +4,17 @@ using Vairas.SchoolManagement.Business;
 using Vairas.SchoolManagement.Integrations;
 namespace Vairas.SchoolManagement.Controllers;
 
-[ApiController, Authorize(Policy = "SchoolEntry"), Route("api/v1/schools/{schoolId:guid}")]
-public sealed class SchoolsController(ISchoolService school, ISchoolActorFactory actors) : ControllerBase
+[Authorize(Policy = "SchoolEntry"), Route("api/v1/schools/{schoolId:guid}")]
+public sealed class SchoolsController(ISchoolService school, ISchoolActorFactory actors, ISchoolSchedulingService coordinated) : BaseApiController
 {
+    /// <summary>List current teacher role identifiers for administrator resource selection.</summary>
+    [HttpGet("teachers", Name = "listSchoolTeachers")]
+    public async Task<ActionResult<IReadOnlyList<TeacherResourceResponse>>> Teachers(Guid schoolId, CancellationToken ct) =>
+        Ok(await school.TeachersAsync(schoolId, await actors.CreateAsync(HttpContext, ct), ct));
+    /// <summary>List only enrollments visible under the caller's current school relationships.</summary>
+    [HttpGet("enrollments", Name = "listVisibleEnrollments")]
+    public async Task<ActionResult<IReadOnlyList<EnrollmentResponse>>> Enrollments(Guid schoolId, CancellationToken ct) =>
+        Ok(await school.VisibleEnrollmentsAsync(schoolId, await actors.CreateAsync(HttpContext, ct), ct));
     /// <summary>Read school metadata under current membership or configured operator authority.</summary>
     [HttpGet(Name = "getSchool")]
     public async Task<ActionResult<SchoolResponse>> Get(Guid schoolId, CancellationToken ct) => Ok(await school.GetSchoolAsync(schoolId, await actors.CreateAsync(HttpContext, ct), ct));
@@ -61,17 +69,15 @@ public sealed class SchoolsController(ISchoolService school, ISchoolActorFactory
     /// <summary>Check actual missing school planning dependencies; absent providers never produce complete=true.</summary>
     [HttpGet("planning-inputs", Name = "getPlanningInputs")]
     public async Task<ActionResult<PlanningInputsResponse>> Planning(Guid schoolId, CancellationToken ct) => Ok(await school.PlanningAsync(schoolId, await actors.CreateAsync(HttpContext, ct), ct));
-    /// <summary>Create enrollment. Unavailable until verified Scheduling activation is implemented.</summary>
+    /// <summary>Create enrollment. Uses durable Scheduling eligibility coordination.</summary>
     [HttpPost("enrollments", Name = "createEnrollment")]
     [ProducesResponseType<ProblemDetails>(503)]
     public async Task<IActionResult> CreateEnrollment(Guid schoolId, CreateEnrollmentRequest request, [FromHeader(Name = "Idempotency-Key")] Guid operation, CancellationToken ct)
     {
-        SchoolRules.Id(request.StudentId);
-        SchoolRules.Text(request.LicenseCategory, 20);
-        await school.RejectActivationAsync(schoolId, "NewEnrollment", schoolId, operation, null, await actors.CreateAsync(HttpContext, ct), ct);
-        return NoContent();
+        SchoolRules.EnrollmentFields(request);
+        return Ok(await coordinated.ChangeAsync(schoolId,operation,new("CreateEnrollment",schoolId,StudentId:request.StudentId,Category:request.LicenseCategory),await actors.CreateAsync(HttpContext,ct),ct));
     }
-    /// <summary>Assign group/programme. Fails before effects while Scheduling/Learning integration is absent.</summary>
+    /// <summary>Assign group/programme. Requires Scheduling coordination and verified Learning programme applicability; missing integration is absent.</summary>
     [HttpPut("enrollments/{enrollmentId:guid}/group-assignment", Name = "assignEnrollmentGroup")]
     [ProducesResponseType<ProblemDetails>(503)]
     public async Task<IActionResult> AssignGroup(Guid schoolId, Guid enrollmentId, GroupAssignmentRequest request, [FromHeader(Name = "Idempotency-Key")] Guid operation, CancellationToken ct)
@@ -79,8 +85,7 @@ public sealed class SchoolsController(ISchoolService school, ISchoolActorFactory
         SchoolRules.Id(request.GroupId);
         SchoolRules.Id(request.ProgramVersionId);
         SchoolRules.Revision(request.ExpectedRevision);
-        await school.RejectActivationAsync(schoolId, "Enrollment", enrollmentId, operation, request.ExpectedRevision, await actors.CreateAsync(HttpContext, ct), ct);
-        return NoContent();
+        return Ok(await coordinated.ChangeAsync(schoolId,operation,new("AssignGroup",enrollmentId,request.ExpectedRevision,GroupId:request.GroupId,ProgramVersionId:request.ProgramVersionId),await actors.CreateAsync(HttpContext,ct),ct));
     }
     /// <summary>End enrollment. No lifecycle activation without Scheduling and completion evidence where required.</summary>
     [HttpPost("enrollments/{enrollmentId:guid}/termination", Name = "endEnrollment")]
@@ -88,19 +93,17 @@ public sealed class SchoolsController(ISchoolService school, ISchoolActorFactory
     public async Task<IActionResult> EndEnrollment(Guid schoolId, Guid enrollmentId, StatusRequest request, [FromHeader(Name = "Idempotency-Key")] Guid operation, CancellationToken ct)
     {
         if (request.Status is not ("Completed" or "Withdrawn" or "Transferred" or "Cancelled"))
-            throw SchoolException.Invalid();
+            throw SchoolErrors.Invalid();
         SchoolRules.Revision(request.ExpectedRevision);
-        await school.RejectActivationAsync(schoolId, "Enrollment", enrollmentId, operation, request.ExpectedRevision, await actors.CreateAsync(HttpContext, ct), ct);
-        return NoContent();
+        return Ok(await coordinated.ChangeAsync(schoolId,operation,new("EndEnrollment",enrollmentId,request.ExpectedRevision,Status:request.Status),await actors.CreateAsync(HttpContext,ct),ct));
     }
-    /// <summary>End membership. Requires coordinated source invalidation; currently unavailable.</summary>
+    /// <summary>End membership through durable Scheduling coordination and Learning authority invalidation.</summary>
     [HttpPost("memberships/{membershipId:guid}/termination", Name = "endMembership")]
     [ProducesResponseType<ProblemDetails>(503)]
     public async Task<IActionResult> EndMembership(Guid schoolId, Guid membershipId, AcceptInvitationRequest request, [FromHeader(Name = "Idempotency-Key")] Guid operation, CancellationToken ct)
     {
         SchoolRules.Revision(request.ExpectedRevision);
-        await school.RejectActivationAsync(schoolId, "Membership", membershipId, operation, request.ExpectedRevision, await actors.CreateAsync(HttpContext, ct), ct);
-        return NoContent();
+        return Ok(await coordinated.ChangeAsync(schoolId,operation,new("EndMembership",membershipId,request.ExpectedRevision),await actors.CreateAsync(HttpContext,ct),ct));
     }
     /// <summary>Assign a teacher to a group. Activation is unavailable without Scheduling coordination.</summary>
     [HttpPost("groups/{groupId:guid}/teacher-assignments", Name = "assignTeacher")]
@@ -109,30 +112,27 @@ public sealed class SchoolsController(ISchoolService school, ISchoolActorFactory
     {
         SchoolRules.Id(request.TeacherId);
         SchoolRules.Revision(request.ExpectedRevision);
-        await school.RejectActivationAsync(schoolId, "Group", groupId, operation, request.ExpectedRevision, await actors.CreateAsync(HttpContext, ct), ct);
-        return NoContent();
+        return Ok(await coordinated.ChangeAsync(schoolId,operation,new("AssignTeacher",groupId,request.ExpectedRevision,TeacherId:request.TeacherId),await actors.CreateAsync(HttpContext,ct),ct));
     }
-    /// <summary>Change school status. Requires coordinated eligibility invalidation; currently unavailable.</summary>
+    /// <summary>Change school status through durable Scheduling coordination and Learning authority invalidation.</summary>
     [HttpPost("status", Name = "changeSchoolStatus")]
     [ProducesResponseType<ProblemDetails>(503)]
     public async Task<IActionResult> Status(Guid schoolId, StatusRequest request, [FromHeader(Name = "Idempotency-Key")] Guid operation, CancellationToken ct)
     {
         if (request.Status is not ("Active" or "Inactive"))
-            throw SchoolException.Invalid();
+            throw SchoolErrors.Invalid();
         SchoolRules.Revision(request.ExpectedRevision);
-        await school.RejectActivationAsync(schoolId, "School", schoolId, operation, request.ExpectedRevision, await actors.CreateAsync(HttpContext, ct), ct);
-        return NoContent();
+        return Ok(await coordinated.ChangeAsync(schoolId,operation,new("SchoolStatus",schoolId,request.ExpectedRevision,Status:request.Status),await actors.CreateAsync(HttpContext,ct),ct));
     }
-    /// <summary>Change branch status. Requires coordinated eligibility invalidation; currently unavailable.</summary>
+    /// <summary>Change branch status through durable Scheduling coordination and Learning authority invalidation.</summary>
     [HttpPost("branches/{branchId:guid}/status", Name = "changeBranchStatus")]
     [ProducesResponseType<ProblemDetails>(503)]
     public async Task<IActionResult> BranchStatus(Guid schoolId, Guid branchId, StatusRequest request, [FromHeader(Name = "Idempotency-Key")] Guid operation, CancellationToken ct)
     {
         if (request.Status is not ("Active" or "Inactive"))
-            throw SchoolException.Invalid();
+            throw SchoolErrors.Invalid();
         SchoolRules.Revision(request.ExpectedRevision);
-        await school.RejectActivationAsync(schoolId, "Branch", branchId, operation, request.ExpectedRevision, await actors.CreateAsync(HttpContext, ct), ct);
-        return NoContent();
+        return Ok(await coordinated.ChangeAsync(schoolId,operation,new("BranchStatus",branchId,request.ExpectedRevision,Status:request.Status),await actors.CreateAsync(HttpContext,ct),ct));
     }
     private ActionResult<MutationResponse<T>> Mutation<T>(MutationResponse<T> result, string location)
     {

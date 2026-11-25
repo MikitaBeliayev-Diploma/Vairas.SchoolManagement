@@ -5,6 +5,7 @@
     <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Azure.Messaging.ServiceBus" Version="7.20.1" />
     <ProjectReference Include="../Vairas.SchoolManagement.Business/Vairas.SchoolManagement.Business.csproj" />
     <ProjectReference Include="../Vairas.SchoolManagement.Persistance/Vairas.SchoolManagement.Persistance.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.15"  />

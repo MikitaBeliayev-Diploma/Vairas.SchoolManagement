@@ -17,6 +17,53 @@ namespace Vairas.SchoolManagement.Tests;
 [TestFixture, Category("Integration"), NonParallelizable]
 public sealed class SchoolIntegrationTests
 {
+    [Test]
+    public async Task Administrator_can_discover_school_invitations_with_keyset_pagination()
+    {
+        var school = await env.SeedSchool();
+        var route = $"/api/v1/schools/{school}/invitations";
+        using var issued = await env.Request(HttpMethod.Post, route, env.Administrator, new { targetUserId = env.Target.UserId, role = "Teacher" }, Guid.NewGuid());
+        Assert.That(issued.IsSuccessStatusCode, Is.True, await issued.Content.ReadAsStringAsync());
+        using var page = await env.Request(HttpMethod.Get, route + "?limit=1", env.Administrator);
+        Assert.That(page.StatusCode, Is.EqualTo(HttpStatusCode.OK), await page.Content.ReadAsStringAsync());
+        var json = await page.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.That(json.GetProperty("items").GetArrayLength(), Is.EqualTo(1));
+        Assert.That(json.GetProperty("items")[0].TryGetProperty("token", out _), Is.False);
+        using var denied = await env.Request(HttpMethod.Get, route, env.Target);
+        Assert.That(denied.StatusCode, Is.AnyOf(HttpStatusCode.Forbidden, HttpStatusCode.NotFound));
+        using var invalid = await env.Request(HttpMethod.Get, route + "?cursor=invalid", env.Administrator);
+        Assert.That(invalid.StatusCode, Is.EqualTo(HttpStatusCode.BadRequest));
+    }
+    [Test]
+    public async Task Inactive_invitation_issuer_cannot_authorize_first_staff_profile()
+    {
+        var issuer = await env.NewUser();
+        var target = await env.NewUser();
+        var school = await env.SeedSchool();
+        var access = env.Factory.Services.GetRequiredService<SchoolAccessOptions>();
+        var original = access.PlatformOperatorUserIds;
+        try
+        {
+            access.PlatformOperatorUserIds = [.. original, issuer.UserId];
+            using var issued = await env.Request(HttpMethod.Post, $"/api/v1/schools/{school:D}/invitations", issuer,
+                new { targetUserId = target.UserId, role = "Teacher" }, Guid.NewGuid());
+            Assert.That(issued.StatusCode, Is.EqualTo(HttpStatusCode.Created), await issued.Content.ReadAsStringAsync());
+            var invitation = (await issued.Content.ReadFromJsonAsync<JsonElement>()).GetProperty("resource").GetProperty("invitationId").GetGuid();
+            await IntegrationEnvironment.Sql(env.UserOwner,
+                $"UPDATE user_profile SET status='Inactive',revision=revision+1,updated_at=clock_timestamp() WHERE user_id='{issuer.UserId:D}'");
+            using var result = await IntegrationEnvironment.Send(env.Users, HttpMethod.Post, "/api/v1/users/me/teacher-profile",
+                target.Tokens.AccessToken, new { schoolId = school, invitationId = invitation }, Guid.NewGuid());
+            Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden), await result.Content.ReadAsStringAsync());
+            await using var connection = new NpgsqlConnection(env.UserOwner);
+            await connection.OpenAsync();
+            await using var query = new NpgsqlCommand("SELECT count(*) FROM teacher_profile WHERE user_id = @user", connection);
+            query.Parameters.AddWithValue("user", target.UserId);
+            Assert.That(await query.ExecuteScalarAsync(), Is.EqualTo(0L));
+            await using var db = env.OwnerDb();
+            Assert.That(await db.Set<SchoolMembership>().AnyAsync(x => x.SchoolId == school && x.UserId == target.UserId), Is.False);
+        }
+        finally { access.PlatformOperatorUserIds = original; }
+    }
     private IntegrationEnvironment env = null!;
     [OneTimeSetUp]
     public async Task Start()
@@ -24,6 +71,34 @@ public sealed class SchoolIntegrationTests
         env = new();
         await env.StartAsync();
         TestContext.Out.WriteLine(env.Version);
+    }
+    [Test]
+    public async Task Deactivation_reviews_use_real_discovery_and_are_tenant_scoped_and_append_only()
+    {
+        var school = await env.SeedSchool(); var user = Guid.NewGuid(); var membership = Guid.NewGuid();
+        await using (var db = env.OwnerDb())
+        {
+            var operation = await db.Set<SchoolOperation>().Where(x => x.SchoolId == school).Select(x => x.OperationId).FirstAsync();
+            db.Add(new SchoolMembership { SchoolId = school, MembershipId = membership, UserId = user, Role = SchoolRole.Teacher, Revision = 1, StartedAt = DateTimeOffset.UtcNow.AddMinutes(-1), LastOperationId = operation });
+            await db.SaveChangesAsync();
+        }
+        var store = new SchoolStore(new Microsoft.EntityFrameworkCore.Infrastructure.PooledDbContextFactory<SchoolDbContext>(new DbContextOptionsBuilder<SchoolDbContext>().UseSchool(env.SchoolRuntime).Options));
+        var service = new SchoolService(store, new MemoryActivity { Profiles = new(user, "Inactive", 2, null, Guid.NewGuid(), null) }, new SchoolAccessOptions(), TimeProvider.System);
+        var message = new UserDeactivatedEvent(Guid.NewGuid(), user, 2, DateTimeOffset.UtcNow, new string('d', 64));
+        Assert.That(await service.ConsumeUserDeactivatedAsync(message, default), Is.EqualTo(new DeactivationOutcome("ReviewsRaised", 1)));
+        Assert.That(await service.ConsumeUserDeactivatedAsync(message, default), Is.EqualTo(new DeactivationOutcome("ReviewsRaised", 1)));
+        await using (var db = env.OwnerDb())
+        {
+            var review = await db.Set<MembershipReview>().SingleAsync(x => x.TargetId == membership);
+            Assert.That((review.SchoolId, review.SubjectRole), Is.EqualTo((school, "Teacher")));
+            Assert.That(await db.Set<SchoolMembership>().Where(x => x.MembershipId == membership).Select(x => x.EndedAt).SingleAsync(), Is.Null);
+        }
+        await using (var other = await store.OpenAsync(Guid.NewGuid(), false, default)) Assert.That(await other.ListAsync<MembershipReview>(x => true, default), Is.Empty);
+        var scope = $"SELECT set_config('vairas.school_id','{school}',false);";
+        await IntegrationEnvironment.Sql(env.SchoolRuntime, scope + $"UPDATE membership_review SET resolved_at=clock_timestamp(),resolved_by_user_id='{Guid.NewGuid()}',resolution_note='Ended' WHERE target_id='{membership}'");
+        Assert.ThrowsAsync<PostgresException>(async () => await IntegrationEnvironment.Sql(env.SchoolRuntime, scope + $"UPDATE membership_review SET resolution_note='Rewritten' WHERE target_id='{membership}'"));
+        Assert.ThrowsAsync<PostgresException>(async () => await IntegrationEnvironment.Sql(env.SchoolRuntime, scope + $"DELETE FROM membership_review WHERE target_id='{membership}'"));
+        Assert.ThrowsAsync<PostgresException>(async () => await IntegrationEnvironment.Sql(env.SchoolOwner, $"UPDATE integration_inbox SET outcome='Forged' WHERE event_id='{message.EventId}'"));
     }
     [OneTimeTearDown]
     public async Task Stop()
@@ -34,6 +109,10 @@ public sealed class SchoolIntegrationTests
     [Test]
     public async Task Readiness_and_actual_openapi_are_available()
     {
+        using var authHealth = await env.Auth.GetAsync("/health/ready");
+        Assert.That(authHealth.StatusCode, Is.EqualTo(HttpStatusCode.OK), await authHealth.Content.ReadAsStringAsync());
+        using var userHealth = await env.Users.GetAsync("/health/ready");
+        Assert.That(userHealth.StatusCode, Is.EqualTo(HttpStatusCode.OK), await userHealth.Content.ReadAsStringAsync());
         using var health = await env.Client.GetAsync("/health/ready");
         Assert.That(health.StatusCode, Is.EqualTo(HttpStatusCode.OK), await health.Content.ReadAsStringAsync());
         using var live = await env.Client.GetAsync("/health/live");
@@ -50,6 +129,24 @@ public sealed class SchoolIntegrationTests
         await File.WriteAllTextAsync(Path.Combine(IntegrationEnvironment.Root, ".cache/school-management.openapi.json"), json);
     }
     [Test]
+    public async Task Vehicle_authority_is_workload_scoped_and_uses_real_Auth_UM_and_School_state()
+    {
+        var school = await env.SeedSchool();
+        var token = await env.Workload("vehicle-management", "school.vehicle-authority.read");
+        using var allowed = await IntegrationEnvironment.Send(env.Client, HttpMethod.Post, "/internal/v1/vehicle-authority/validate", token,
+            new { schoolId = school, actorUserId = env.Administrator.UserId });
+        Assert.That(allowed.StatusCode, Is.EqualTo(HttpStatusCode.OK), await allowed.Content.ReadAsStringAsync());
+        var basis = await allowed.Content.ReadFromJsonAsync<VehicleAuthorityResponse>();
+        Assert.That(basis!.Allowed, Is.True); Assert.That(basis.ActorUserId, Is.EqualTo(env.Administrator.UserId));
+        using var denied = await IntegrationEnvironment.Send(env.Client, HttpMethod.Post, "/internal/v1/vehicle-authority/validate", token,
+            new { schoolId = school, actorUserId = env.Outsider.UserId });
+        Assert.That(denied.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        Assert.That((await denied.Content.ReadFromJsonAsync<VehicleAuthorityResponse>())!.Allowed, Is.False);
+        using var user = await IntegrationEnvironment.Send(env.Client, HttpMethod.Post, "/internal/v1/vehicle-authority/validate", env.Administrator.Tokens.AccessToken,
+            new { schoolId = school, actorUserId = env.Administrator.UserId });
+        Assert.That(user.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+    }
+    [Test]
     public async Task Real_Auth_and_UM_admit_actor_but_profile_without_membership_does_not()
     {
         var school = await env.SeedSchool();
@@ -60,6 +157,41 @@ public sealed class SchoolIntegrationTests
         using var anonymous = await env.Request(HttpMethod.Get, $"/api/v1/schools/{school}", null);
         Assert.That(anonymous.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task Foreign_school_lifecycle_is_not_disclosed(bool inactive)
+    {
+        var school = await env.SeedSchool();
+        if (inactive)
+            await IntegrationEnvironment.Sql(env.SchoolOwner, $"UPDATE school SET status='Inactive',revision=revision+1,updated_at=clock_timestamp() WHERE school_id='{school:D}'");
+        using var foreign = await env.Request(HttpMethod.Get, $"/api/v1/schools/{school:D}", env.Outsider);
+        using var absent = await env.Request(HttpMethod.Get, $"/api/v1/schools/{Guid.NewGuid():D}", env.Outsider);
+        Assert.That(foreign.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
+        Assert.That(absent.StatusCode, Is.EqualTo(foreign.StatusCode));
+        var foreignBody = await foreign.Content.ReadFromJsonAsync<JsonElement>();
+        var absentBody = await absent.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.That(foreignBody.GetProperty("code").GetString(), Is.EqualTo(absentBody.GetProperty("code").GetString()));
+    }
+
+    [TestCase(false)]
+    [TestCase(true)]
+    public async Task Self_invitation_filter_does_not_disclose_foreign_school_existence(bool inactive)
+    {
+        var school = await env.SeedSchool();
+        if (inactive)
+            await IntegrationEnvironment.Sql(env.SchoolOwner, $"UPDATE school SET status='Inactive',revision=revision+1,updated_at=clock_timestamp() WHERE school_id='{school:D}'");
+        using var foreign = await env.Request(HttpMethod.Get, $"/api/v1/users/me/invitations?schoolId={school:D}", env.Outsider);
+        using var absent = await env.Request(HttpMethod.Get, $"/api/v1/users/me/invitations?schoolId={Guid.NewGuid():D}", env.Outsider);
+        Assert.That(foreign.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+        Assert.That(absent.StatusCode, Is.EqualTo(foreign.StatusCode));
+        foreach (var response in new[] { foreign, absent })
+        {
+            var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.That(body.GetProperty("items").GetArrayLength(), Is.Zero);
+            Assert.That(body.GetProperty("nextCursor").ValueKind, Is.EqualTo(JsonValueKind.Null));
+        }
+    }
+
     [Test]
     public async Task Invitations_use_real_UM_School_provider_and_gate_denies_new_membership()
     {
@@ -135,7 +267,9 @@ public sealed class SchoolIntegrationTests
         Assert.That(await IntegrationEnvironment.Scalar(env.SchoolRuntime, "SELECT has_database_privilege(current_database(),'TEMP')"), Is.EqualTo("False"));
         var create = Assert.ThrowsAsync<PostgresException>(async () => await IntegrationEnvironment.Sql(env.SchoolRuntime, "CREATE TABLE public.forbidden_runtime_table(id uuid)"))!;
         Assert.That(create.SqlState, Is.EqualTo("42501"));
-        Assert.That(await IntegrationEnvironment.Scalar(env.SchoolRuntime, "SELECT count(*) FROM pg_tables WHERE schemaname='public' AND rowsecurity"), Is.EqualTo("13"));
+        Assert.That(await IntegrationEnvironment.Scalar(env.SchoolRuntime, "SELECT count(*) FROM pg_tables WHERE schemaname='public' AND rowsecurity AND tablename NOT IN ('school_coordination','school_learning_outbox','membership_review')"), Is.EqualTo("13"));
+        Assert.That(await IntegrationEnvironment.Scalar(env.SchoolRuntime, "SELECT string_agg(tablename||':'||rowsecurity,',' ORDER BY tablename) FROM pg_tables WHERE schemaname='public' AND tablename IN ('membership_review','integration_inbox')"), Is.EqualTo("integration_inbox:false,membership_review:true"));
+        Assert.That(await IntegrationEnvironment.Scalar(env.SchoolRuntime, "SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND tablename='school_learning_outbox'"), Is.EqualTo("True"));
     }
     [Test]
     public async Task Native_overlap_and_immutable_evidence_are_enforced()
@@ -272,7 +406,7 @@ public sealed class SchoolIntegrationTests
         using (var allowed = await env.Request(HttpMethod.Get, $"/api/v1/schools/{school}", user))
             Assert.That(allowed.StatusCode, Is.EqualTo(HttpStatusCode.OK), await allowed.Content.ReadAsStringAsync());
         // Fixture controls UM primary state; the School admission path remains real HTTP.
-        await IntegrationEnvironment.Sql(env.UserOwner, $"UPDATE user_profile SET status='Inactive',revision=revision+1,updated_at=clock_timestamp() WHERE user_id='{user.UserId:D}'");
+        await IntegrationEnvironment.Sql(env.UserOwner, $"UPDATE user_profile SET status='Inactive',revision=revision+1,updated_at=GREATEST(created_at,clock_timestamp()) WHERE user_id='{user.UserId:D}'");
         using var denied = await env.Request(HttpMethod.Get, $"/api/v1/schools/{school}", user);
         Assert.That(denied.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden), await denied.Content.ReadAsStringAsync());
     }
@@ -348,13 +482,57 @@ public sealed class SchoolIntegrationTests
         Assert.That(read.StatusCode, Is.EqualTo(HttpStatusCode.NotFound));
     }
     [Test]
+    public async Task Invitation_keyset_limits_each_school_and_matches_Guid_order_on_PostgreSql()
+    {
+        var schools = new[] { await env.SeedSchool(), await env.SeedSchool() };
+        var target = Guid.NewGuid();
+        var now = new DateTimeOffset(2026, 11, 24, 0, 0, 0, TimeSpan.Zero);
+        var ids = new[] { "ffffffff-ffff-ffff-ffff-ffffffffffff", "80000000-8000-8000-8000-800000000000", "7fffffff-ffff-ffff-ffff-ffffffffffff", "00000001-0000-0000-0000-000000000000" }.Select(Guid.Parse).ToArray();
+        var expected = new List<(Guid School, Guid Id)>();
+        await using var db = env.OwnerDb();
+        foreach (var school in schools)
+            foreach (var id in ids)
+            {
+                var op = Guid.NewGuid();
+                db.Add(new SchoolOperation { SchoolId = school, OperationId = op, CommandName = "IsolatedPaginationFixture", TargetKind = "SchoolInvitation", TargetId = id, ActorUserId = env.Administrator.UserId, Channel = OperationChannel.Internal, Status = OperationStatus.Committed, RequestFingerprint = new string('a', 64), RequestedAt = now, ResolvedAt = now, AuthorityBasis = "synthetic test fixture", OutcomeCode = "TEST_ONLY" });
+                db.Add(new SchoolInvitation { SchoolId = school, InvitationId = id, TargetUserId = target, Role = SchoolRole.Teacher, Revision = 1, Status = InvitationStatus.Pending, CreatedAt = now, ExpiresAt = now.AddDays(1), IssuedOperationId = op });
+                expected.Add((school, id));
+            }
+        await db.SaveChangesAsync();
+        var seen = new List<(Guid School, Guid Id)>();
+        InvitationCursor? cursor = null;
+        while (true)
+        {
+            var candidates = new List<SchoolInvitation>();
+            foreach (var school in schools)
+            {
+                var rows = await SchoolStore.OwnInvitationPage(db, school, target, 3, cursor).ToArrayAsync();
+                Assert.That(rows.Length, Is.LessThanOrEqualTo(3));
+                candidates.AddRange(rows);
+            }
+            var page = candidates.OrderBy(x => x.CreatedAt).ThenBy(x => x.SchoolId).ThenBy(x => x.InvitationId).Take(2).ToArray();
+            if (page.Length == 0) break;
+            seen.AddRange(page.Select(x => (x.SchoolId, x.InvitationId)));
+            Assert.That(seen.Count, Is.LessThanOrEqualTo(expected.Count), "Database cursor did not advance.");
+            var last = page.Last();
+            cursor = new(last.CreatedAt, last.SchoolId, last.InvitationId);
+        }
+        Assert.That(seen, Is.EqualTo(expected.OrderBy(x => x.School).ThenBy(x => x.Id)));
+    }
+
+    [Test]
     public async Task EF_snapshot_and_canonical_column_types_match_the_migrated_database()
     {
         await using var db = env.OwnerDb();
         Assert.That(db.Database.HasPendingModelChanges(), Is.False);
-        var columns = await IntegrationEnvironment.Scalar(env.SchoolOwner, "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name<>'__EFMigrationsHistory'");
+        var columns = await IntegrationEnvironment.Scalar(env.SchoolOwner, "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name NOT IN ('__EFMigrationsHistory','school_coordination','school_learning_outbox','membership_review','integration_inbox')");
         Assert.That(columns, Is.EqualTo("137"));
+        Assert.That(await IntegrationEnvironment.Scalar(env.SchoolOwner,"SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='school_learning_outbox'"),Is.EqualTo("13"));
+        Assert.That(await IntegrationEnvironment.Scalar(env.SchoolOwner,"SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name IN ('membership_review','integration_inbox')"),Is.EqualTo("19"));
+        Assert.That(await IntegrationEnvironment.Scalar(env.SchoolOwner,"SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='school_coordination'"),Is.EqualTo("14"));
+        Assert.That(await IntegrationEnvironment.Scalar(env.SchoolRuntime,"SELECT rowsecurity FROM pg_tables WHERE schemaname='public' AND tablename='school_coordination'"),Is.EqualTo("True"));
         Assert.That(await IntegrationEnvironment.Scalar(env.SchoolOwner, "SELECT count(*) FROM pg_constraint WHERE contype='x'"), Is.EqualTo("4"));
     }
 
 }
+

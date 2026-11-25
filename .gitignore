@@ -15,3 +15,23 @@
 *.p12
 *.p8
 *.snk
+.idea/
+evidence/
+
+# Local generated output and private configuration
+**/node_modules/
+**/.angular/
+**/.cache/
+**/dist/
+**/coverage/
+**/test-results/
+**/playwright-report/
+**/.evidence/
+**/evidence/
+**/.codex/
+**/.agents/
+**/.vscode/
+*.trx
+*.binlog
+*.log
+*.tsbuildinfo

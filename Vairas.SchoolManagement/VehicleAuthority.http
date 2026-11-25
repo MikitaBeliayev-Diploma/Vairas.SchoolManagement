@@ -1,0 +1,19 @@
+@schoolOrigin = https://localhost:7200
+@workloadToken = REPLACE_WITH_VEHICLE_WORKLOAD_TOKEN
+@schoolId = 11111111-1111-4111-8111-111111111111
+@branchId = 22222222-2222-4222-8222-222222222222
+@actorUserId = 33333333-3333-4333-8333-333333333333
+
+### Read-only school authority; scope school.vehicle-authority.read and client allowlist required
+POST {{schoolOrigin}}/internal/v1/vehicle-authority/validate
+Authorization: Bearer {{workloadToken}}
+Content-Type: application/json
+
+{"schoolId":"{{schoolId}}","branchId":"{{branchId}}","actorUserId":"{{actorUserId}}"}
+
+### Actor omitted: workload-only operational school/branch check, not human authorization
+POST {{schoolOrigin}}/internal/v1/vehicle-authority/validate
+Authorization: Bearer {{workloadToken}}
+Content-Type: application/json
+
+{"schoolId":"{{schoolId}}","branchId":"{{branchId}}"}
